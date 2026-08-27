@@ -172,6 +172,42 @@
     .metric strong{display:block;margin-top:4px;font-size:14px}
     .route-details{margin-top:12px;padding-top:12px;border-top:1px solid #edf0f4;display:none}
     .route-card.selected .route-details{display:block}
+
+    /* ---------- GOOGLE MAPS DIRECTIONS ---------- */
+    .route-actions{
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+      margin-top:14px;
+      padding-top:13px;
+      border-top:1px solid #edf0f4;
+    }
+    .directions-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      border:0;
+      background:#155eef;
+      color:#fff;
+      padding:10px 17px;
+      border-radius:9px;
+      font-size:13px;
+      font-weight:800;
+      cursor:pointer;
+      box-shadow:0 4px 12px rgba(21,94,239,.18);
+      transition:transform .18s ease,background .18s ease,box-shadow .18s ease;
+    }
+    .directions-btn:hover{
+      background:#0d4dcc;
+      transform:translateY(-1px);
+      box-shadow:0 7px 16px rgba(21,94,239,.25);
+    }
+    .directions-btn:active{transform:translateY(0)}
+    @media(max-width:700px){
+      .route-actions{justify-content:stretch}
+      .directions-btn{width:100%}
+    }
     .detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
     .detail{font-size:11px;color:#596579}
     .detail b{display:block;color:#182438;margin-bottom:2px}
@@ -827,6 +863,7 @@ function clearRouteOnly(){
 // RENDER ROUTES
 // ============================================================
 function renderRoutes(routes, safestId){
+  window.guardianRoutes = routes;
   const bounds=[];
   const results=document.getElementById("routeResults");
 
@@ -938,6 +975,17 @@ function createRouteCard(route, isBest){
       <div class="metric"><span>Risk Score</span><strong>${risk==null?"—":risk.toFixed(1)+"/100"}</strong></div>
     </div>
 
+    <div class="route-actions">
+      <button
+        type="button"
+        class="directions-btn"
+        aria-label="Get directions for this route"
+        onclick="event.stopPropagation(); openGoogleMapsRoute(${route.id})"
+      >
+        📍 Get Directions
+      </button>
+    </div>
+
     <div class="route-details">
       <div class="detail-grid">
         <div class="detail"><b>🔴 Crime Risk</b>${safe(s.crime_risk)}</div>
@@ -955,6 +1003,63 @@ function createRouteCard(route, isBest){
 
   card.addEventListener("click",()=>selectRouteCard(route.id));
   return card;
+}
+
+function openGoogleMapsRoute(routeId){
+  if(!currentLocation){
+    alert("Current location is not available. Please allow location access first.");
+    return;
+  }
+
+  if(!destination){
+    alert("Please select a destination first.");
+    return;
+  }
+
+  const origin = `${currentLocation.lat},${currentLocation.lon}`;
+  const destinationCoordinates =
+    `${destination.latitude},${destination.longitude}`;
+
+  const params = new URLSearchParams({
+    api: "1",
+    origin: origin,
+    destination: destinationCoordinates,
+    travelmode: "driving"
+  });
+
+  /*
+   * Pass selected route waypoints when available.
+   * This helps Google Maps follow the selected Guardian AI route
+   * more closely instead of always choosing its own route.
+   */
+  const route = Array.isArray(window.guardianRoutes)
+    ? window.guardianRoutes.find(r => String(r.id) === String(routeId))
+    : null;
+
+  const geometry = route?.geometry?.coordinates || [];
+
+  if(geometry.length >= 3){
+    const indexes = [
+      Math.floor(geometry.length * 0.25),
+      Math.floor(geometry.length * 0.50),
+      Math.floor(geometry.length * 0.75)
+    ];
+
+    const waypoints = indexes
+      .map(i => geometry[i])
+      .filter(c => Array.isArray(c) && c.length >= 2)
+      .map(c => `${c[1]},${c[0]}`)
+      .filter((v,i,a) => a.indexOf(v) === i);
+
+    if(waypoints.length){
+      params.set("waypoints", waypoints.join("|"));
+    }
+  }
+
+  const googleMapsUrl =
+    `https://www.google.com/maps/dir/?${params.toString()}`;
+
+  window.open(googleMapsUrl, "_blank", "noopener,noreferrer");
 }
 
 function selectRouteCard(id){
@@ -1037,16 +1142,439 @@ document.addEventListener("click", function(e) {
   }
 });
 
-</script>
+// ============================================================
+// BLUETOOTH SAFETY - INTEGRATED
+// ============================================================
+let btDevice = null;
+let btServer = null;
+let btService = null;
+let btSosChar = null;
+let btAckChar = null;
+let btConnected = false;
+let btSending = false;
 
-<script src="/static/js/ble.js"></script>
-<script>
+const BT_SERVICE_UUID = "0000bafe-0000-1000-8000-00805f9b34fb";
+const BT_SOS_UUID = "0000b0a1-0000-1000-8000-00805f9b34fb";
+const BT_ACK_UUID = "0000b0a2-0000-1000-8000-00805f9b34fb";
+const BT_CHUNK_SIZE = 20;
+const BT_MAX_RETRIES = 3;
+
+function btSetStatus(message, type = "info") {
+  const statusEl = document.getElementById("btStatus");
+  const textEl = document.getElementById("btStatusText");
+  statusEl.className = `bt-status ${type}`;
+  textEl.textContent = message;
+}
+
+function btLog(message, color = "#ddd") {
+  console.log(`[BT] ${message}`);
+}
+
+function btUpdateButtons() {
+  const connected = btConnected && btDevice && btDevice.gatt && btDevice.gatt.connected && btSosChar;
+  document.getElementById("btScanBtn").disabled = false;
+  document.getElementById("btDisconnectBtn").disabled = !connected;
+  document.getElementById("btTestBtn").disabled = !connected || btSending;
+  document.getElementById("btSosBtn").disabled = !connected || btSending;
+  document.getElementById("btSendMessageBtn").disabled = !connected || btSending;
+  document.getElementById("btClearMessageBtn").disabled = !connected || btSending;
+  document.getElementById("btMessageInput").disabled = !connected || btSending;
+}
+
+function btSleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Bluetooth Scan
+document.getElementById("btScanBtn").addEventListener("click", async function() {
+  if (!navigator.bluetooth) {
+    btSetStatus("❌ Web Bluetooth is not supported. Use Chrome or Edge.", "error");
+    return;
+  }
+
+  this.disabled = true;
+  this.textContent = "🔍 Selecting device...";
+  btSetStatus("Select your Bluetooth safety device...", "info");
+
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: [BT_SERVICE_UUID]
+    });
+
+    btDevice = device;
+    btLog(`✅ Found device: ${device.name || "Unknown"}`);
+
+    // Display device
+    const list = document.getElementById("btDeviceList");
+    list.innerHTML = `
+      <div class="bt-device">
+        <div>
+          <strong>📱 ${escapeHtml(device.name || "Unknown BLE Device")}</strong>
+          <span>ID: ${escapeHtml(device.id || "Unavailable")}</span>
+        </div>
+        <span class="bt-badge">Connected</span>
+      </div>
+    `;
+
+    // Connect
+    await btConnectDevice();
+
+  } catch (error) {
+    if (error.name === "NotFoundError" || String(error.message).includes("cancel")) {
+      btSetStatus("Bluetooth selection cancelled.", "warning");
+    } else {
+      btSetStatus(`❌ Connection error: ${error.message}`, "error");
+      btLog(`❌ Error: ${error.message}`, "#ef5350");
+    }
+  } finally {
+    this.disabled = false;
+    this.textContent = "📡 Connect Safety Device";
+    btUpdateButtons();
+  }
+});
+
+async function btConnectDevice() {
+  if (!btDevice) throw new Error("No device selected");
+
+  btSetStatus(`🔗 Connecting to ${btDevice.name || "device"}...`, "info");
+
+  try {
+    if (!btDevice.gatt || !btDevice.gatt.connected) {
+      btServer = await btDevice.gatt.connect();
+    } else {
+      btServer = btDevice.gatt;
+    }
+
+    btLog("✅ GATT Connected!", "#81c784");
+    btService = await btServer.getPrimaryService(BT_SERVICE_UUID);
+    btLog(`✅ BAFE service found`, "#81c784");
+
+    // Get characteristics
+    const chars = await btService.getCharacteristics();
+    btSosChar = null;
+    btAckChar = null;
+
+    for (const c of chars) {
+      const uuid = c.uuid.toLowerCase();
+      if (uuid === BT_SOS_UUID) {
+        btSosChar = c;
+        btLog(`✅ Found B0A1 WRITE characteristic`, "#81c784");
+      }
+      if (uuid === BT_ACK_UUID) {
+        btAckChar = c;
+        btLog(`✅ Found B0A2 NOTIFY characteristic`, "#81c784");
+      }
+    }
+
+    if (!btSosChar) {
+      throw new Error("B0A1 WRITE characteristic not found.");
+    }
+
+    // Enable notifications
+    if (btAckChar && (btAckChar.properties.notify || btAckChar.properties.indicate)) {
+      try {
+        await btAckChar.startNotifications();
+        btAckChar.addEventListener("characteristicvaluechanged", btHandleAck);
+        btLog("✅ B0A2 notifications enabled.", "#81c784");
+      } catch (e) {
+        btLog(`⚠️ Notification setup failed: ${e.message}`, "#ffb74d");
+      }
+    }
+
+    btConnected = true;
+    btSetStatus(`✅ Connected to ${btDevice.name || "device"} — Ready!`, "success");
+    btLog("✅ SAFE ROUTE BLE READY", "#81c784");
+    btUpdateButtons();
+
+  } catch (error) {
+    btConnected = false;
+    btSetStatus(`❌ Connection failed: ${error.message}`, "error");
+    btLog(`❌ Connection error: ${error.message}`, "#ef5350");
+    throw error;
+  }
+}
+
+function btHandleAck(event) {
+  try {
+    const value = event.target.value;
+    const decoded = new TextDecoder().decode(value);
+    btLog(`📥 ACK received: ${decoded}`, "#81c784");
+    btSetStatus("✅ ACK received from device.", "success");
+  } catch (e) {
+    btLog(`⚠️ ACK decode failed: ${e.message}`, "#ffb74d");
+  }
+}
+
+async function btWriteOne(data) {
+  if (!btSosChar) throw new Error("B0A1 not available");
+  if (!btDevice.gatt || !btDevice.gatt.connected) {
+    btConnected = false;
+    btUpdateButtons();
+    throw new Error("BLE device disconnected");
+  }
+
+  const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+  if (bytes.length > BT_CHUNK_SIZE) {
+    throw new Error(`Packet exceeds ${BT_CHUNK_SIZE} bytes`);
+  }
+
+  let lastError = null;
+  for (let attempt = 1; attempt <= BT_MAX_RETRIES; attempt++) {
+    try {
+      if (btSosChar.properties.writeWithoutResponse && typeof btSosChar.writeValueWithoutResponse === "function") {
+        await btSosChar.writeValueWithoutResponse(bytes);
+      } else if (btSosChar.properties.write && typeof btSosChar.writeValueWithResponse === "function") {
+        await btSosChar.writeValueWithResponse(bytes);
+      } else if (typeof btSosChar.writeValue === "function") {
+        await btSosChar.writeValue(bytes);
+      } else {
+        throw new Error("No supported write method");
+      }
+      return;
+    } catch (error) {
+      lastError = error;
+      btLog(`⚠️ Write attempt ${attempt}/${BT_MAX_RETRIES} failed: ${error.message}`, "#ffb74d");
+      if (attempt < BT_MAX_RETRIES) await btSleep(300);
+    }
+  }
+  throw lastError || new Error("Write failed");
+}
+
+async function btSendChunks(bytes) {
+  const total = Math.ceil(bytes.length / BT_CHUNK_SIZE);
+  btLog(`📦 Splitting into ${total} packets...`, "#4fc3f7");
+
+  for (let i = 0; i < total; i++) {
+    const start = i * BT_CHUNK_SIZE;
+    const end = Math.min(start + BT_CHUNK_SIZE, bytes.length);
+    const chunk = bytes.slice(start, end);
+    btLog(`📤 Packet ${i+1}/${total}: ${chunk.length} bytes`, "#4fc3f7");
+    await btWriteOne(chunk);
+    if (i < total - 1) await btSleep(120);
+  }
+  btLog(`✅ All ${total} packets sent.`, "#81c784");
+}
+
+// Get current location for SOS
+function btGetLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve({ latitude: 20.9374, longitude: 77.7796, speed: 0 });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, speed: pos.coords.speed || 0 }),
+      () => resolve({ latitude: 20.9374, longitude: 77.7796, speed: 0 }),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  });
+}
+
+// Send SOS
+document.getElementById("btSosBtn").addEventListener("click", async function() {
+  if (btSending || !btConnected) return;
+
+  btSending = true;
+  btUpdateButtons();
+  btSetStatus("🚨 Preparing SOS...", "info");
+
+  try {
+    const location = await btGetLocation();
+    btLog(`📍 Location: ${location.latitude}, ${location.longitude}`, "#4fc3f7");
+
+    const sosData = {
+      message_id: "SOS-BLE-" + Date.now(),
+      source_device_id: btDevice?.id || "UNKNOWN",
+      latitude: location.latitude,
+      longitude: location.longitude,
+      speed: location.speed || 0,
+      timestamp: Math.floor(Date.now() / 1000),
+      emergency_type: "GENERAL",
+      from: "GuardianAI_Web"
+    };
+
+    const json = JSON.stringify(sosData);
+    const encoded = new TextEncoder().encode(json);
+    btLog(`📦 SOS data: ${encoded.length} bytes`, "#4fc3f7");
+
+    await btSendChunks(encoded);
+
+    // Forward to server
+    try {
+      const res = await fetch("/api/emergency/bluetooth-forward", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sosData)
+      });
+      const result = await res.json();
+      if (result.success) {
+        btLog("✅ Server acknowledged SOS", "#81c784");
+      }
+    } catch (e) {
+      btLog(`⚠️ Server forward failed: ${e.message}`, "#ffb74d");
+    }
+
+    btSetStatus("✅ SOS sent successfully!", "success");
+    btLog("✅ SOS COMPLETE", "#81c784");
+
+  } catch (error) {
+    btSetStatus(`❌ SOS failed: ${error.message}`, "error");
+    btLog(`❌ SOS error: ${error.message}`, "#ef5350");
+  } finally {
+    btSending = false;
+    btUpdateButtons();
+  }
+});
+
+// Test connection
+document.getElementById("btTestBtn").addEventListener("click", async function() {
+  if (btSending || !btConnected) return;
+
+  btSending = true;
+  btUpdateButtons();
+  btSetStatus("🧪 Testing B0A1 WRITE...", "info");
+
+  try {
+    const data = new TextEncoder().encode("PING");
+    await btWriteOne(data);
+    btSetStatus("✅ B0A1 WRITE test succeeded.", "success");
+    btLog("✅ PING write succeeded!", "#81c784");
+  } catch (error) {
+    btSetStatus(`❌ Test failed: ${error.message}`, "error");
+    btLog(`❌ PING failed: ${error.message}`, "#ef5350");
+  } finally {
+    btSending = false;
+    btUpdateButtons();
+  }
+});
+
+// Send message
+document.getElementById("btSendMessageBtn").addEventListener("click", async function() {
+  if (btSending || !btConnected) return;
+
+  const input = document.getElementById("btMessageInput");
+  const message = input.value.trim();
+  if (!message) {
+    btSetStatus("⚠️ Please type a message.", "warning");
+    return;
+  }
+
+  const encoded = new TextEncoder().encode(message);
+  if (encoded.length > BT_CHUNK_SIZE) {
+    btSetStatus(`❌ Message exceeds ${BT_CHUNK_SIZE} bytes.`, "error");
+    return;
+  }
+
+  btSending = true;
+  btUpdateButtons();
+  btSetStatus("📨 Sending message...", "info");
+
+  try {
+    await btWriteOne(encoded);
+    btSetStatus("✅ Message sent.", "success");
+    btLog(`📨 Message sent: ${message}`, "#ce93d8");
+  } catch (error) {
+    btSetStatus(`❌ Failed: ${error.message}`, "error");
+  } finally {
+    btSending = false;
+    btUpdateButtons();
+  }
+});
+
+// Clear message
+document.getElementById("btClearMessageBtn").addEventListener("click", function() {
+  document.getElementById("btMessageInput").value = "";
+  btUpdateMessageCounter();
+});
+
+// Message counter
+function btUpdateMessageCounter() {
+  const input = document.getElementById("btMessageInput");
+  const text = input.value;
+  const bytes = new TextEncoder().encode(text);
+  document.getElementById("btMessageCounter").textContent = `${text.length} / 20 characters`;
+  document.getElementById("btByteStatus").textContent = `Bytes: ${bytes.length} / 20`;
+}
+
+document.getElementById("btMessageInput").addEventListener("input", btUpdateMessageCounter);
+
+// Disconnect
+document.getElementById("btDisconnectBtn").addEventListener("click", function() {
+  try {
+    if (btDevice && btDevice.gatt && btDevice.gatt.connected) {
+      btDevice.gatt.disconnect();
+    }
+  } catch (e) {}
+
+  btConnected = false;
+  btServer = null;
+  btService = null;
+  btSosChar = null;
+  btAckChar = null;
+  btUpdateButtons();
+  btSetStatus("🔌 Bluetooth disconnected.", "warning");
+  document.getElementById("btDeviceList").innerHTML = "";
+  btLog("🔌 Disconnected", "#ffb74d");
+});
+
+// Bluetooth Modal functions
+function openBluetoothSafety(emergencyMode = false) {
+  const modal = document.getElementById("bluetoothModal");
+  if (!modal) return;
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  
+  // Update location
+  btGetLocation().then(loc => {
+    const el = document.getElementById("btLocationText");
+    el.innerHTML = `
+      <strong>📍 Current Location</strong><br>
+      Latitude: ${loc.latitude.toFixed(6)}<br>
+      Longitude: ${loc.longitude.toFixed(6)}
+    `;
+    const link = document.getElementById("btMapLink");
+    link.href = `https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`;
+    link.style.display = "inline-block";
+  });
+
+  if (emergencyMode) {
+    btSetStatus("🚨 Emergency mode active. Connect your safety device.", "warning");
+    // Auto-click scan if not connected
+    if (!btConnected) {
+      setTimeout(() => document.getElementById("btScanBtn").click(), 500);
+    }
+  }
+}
+
+function closeBluetoothSafety() {
+  const modal = document.getElementById("bluetoothModal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+// Keyboard shortcut
+document.addEventListener("keydown", function(event) {
+  if (event.key === "Escape") closeBluetoothSafety();
+});
+
+// Click outside modal to close
+document.getElementById("bluetoothModal")?.addEventListener("click", function(event) {
+  if (event.target.id === "bluetoothModal") closeBluetoothSafety();
+});
+
 // ============================================================
-// GUARDIAN AI - FINAL PAGE INITIALIZATION
-// BLE logic lives in static/js/ble.js.
+// INIT
 // ============================================================
-window.addEventListener("load", function () {
+window.addEventListener("load", function() {
   initMap();
+  btUpdateMessageCounter();
+  btUpdateButtons();
+  
+  // Auto-request location
   setTimeout(getCurrentLocation, 700);
 });
 </script>

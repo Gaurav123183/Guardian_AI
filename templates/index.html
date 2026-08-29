@@ -620,6 +620,27 @@
       gap:12px
     }
 
+    /* ---------- GET DIRECTION BUTTON ---------- */
+    .route-direction-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      margin-top:12px;
+      padding:9px 14px;
+      border-radius:9px;
+      background:#155eef;
+      color:#fff;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+      transition:.2s ease;
+    }
+
+    .route-direction-btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 6px 15px rgba(21,94,239,.22);
+    }
+
     .route-name{
       font-weight:900
     }
@@ -1121,6 +1142,17 @@
 
       .search-row{
         grid-template-columns:1fr
+      }
+
+      .find-route-wrap{
+        width:100%;
+        min-width:0
+      }
+
+      .find-route-button{
+        width:100% !important;
+        min-width:0;
+        white-space:nowrap
       }
 
       .route-main{
@@ -2966,6 +2998,14 @@ function createRouteCard(
 
     </div>
 
+    <a
+      class="route-direction-btn"
+      href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(currentLocation.lat + "," + currentLocation.lon)}&destination=${encodeURIComponent(destination.latitude + "," + destination.longitude)}&travelmode=walking"
+      target="_blank"
+      rel="noopener"
+      onclick="event.stopPropagation()">
+      Get Direction →
+    </a>
 
     <div class="route-main">
 

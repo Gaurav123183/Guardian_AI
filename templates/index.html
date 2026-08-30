@@ -194,6 +194,12 @@
     .detail b{display:block;color:#182438;margin-bottom:2px}
     .empty{padding:30px;text-align:center;color:#748095}
     .loading{padding:22px;text-align:center;color:#155eef;font-weight:700}
+    .loading-spinner{display:inline-block;width:18px;height:18px;border:3px solid #dbe7ff;border-top-color:#155eef;border-radius:50%;animation:guardianSpin .8s linear infinite;vertical-align:-4px;margin-right:8px}
+    @keyframes guardianSpin{to{transform:rotate(360deg)}}
+    .find-route-wrap{display:flex;align-items:end;min-width:0}
+    .find-route-btn{height:45px;width:100%;min-width:0;white-space:nowrap}
+    .find-route-btn:disabled{opacity:.7;cursor:wait}
+
 
     /* ---------- OTHER FEATURES ---------- */
     .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -261,6 +267,8 @@
       .hero-grid,.features,.info-grid{grid-template-columns:1fr}
       .nav-links{display:none}
       .search-row{grid-template-columns:1fr}
+      .find-route-wrap{width:100%}
+      .find-route-btn{width:100%}
       .route-main{grid-template-columns:repeat(2,1fr)}
       .detail-grid{grid-template-columns:1fr 1fr}
       #routeMap{height:430px}
@@ -284,7 +292,7 @@
       <a href="#contact">Contact</a>
     </div>
 
-    <button class="nav-emergency" onclick="openBluetoothSafety(true)">
+    <button class="nav-emergency" onclick="window.location.href='https://sms-send-kae4.onrender.com/'">
       🚨 Emergency
     </button>
   </div>
@@ -388,8 +396,8 @@
               <div id="destinationSuggestions" class="suggestions"></div>
             </div>
 
-            <div style="display:flex;align-items:end">
-              <button id="findRoutesBtn" class="btn btn-primary" style="height:45px;width:100%">
+            <div class="find-route-wrap">
+              <button id="findRoutesBtn" class="btn btn-primary find-route-btn">
                 Find Safe Route
               </button>
             </div>
@@ -454,7 +462,7 @@
   </section>
 </main>
 
-<button class="emergency" onclick="openBluetoothSafety(true)">
+<button class="emergency" onclick="window.location.href='https://sms-send-kae4.onrender.com/'">
   🚨 Emergency
 </button>
 
@@ -804,7 +812,10 @@ async function findRoutes(){
   }
 
   const results=document.getElementById("routeResults");
-  results.innerHTML='<div class="loading">🔄 Finding and comparing safer routes...</div>';
+  const findButton=document.getElementById("findRoutesBtn");
+  results.innerHTML='<div class="loading"><span class="loading-spinner"></span>Finding and comparing safer routes...</div>';
+  findButton.disabled=true;
+  findButton.textContent="Finding Safe Routes...";
 
   clearRouteOnly();
 
@@ -831,6 +842,9 @@ async function findRoutes(){
   }catch(err){
     console.error(err);
     results.innerHTML=`<div class="empty">❌ ${escapeHtml(err.message || "Unable to calculate route.")}</div>`;
+  }finally{
+    findButton.disabled=false;
+    findButton.textContent="Find Safe Route";
   }
 }
 
@@ -948,6 +962,13 @@ function createRouteCard(route, isBest){
       </div>
     </div>
 
+    <button
+      class="route-direction-btn"
+      type="button"
+      onclick="event.stopPropagation(); openRouteDirections()">
+      🧭 Get Directions
+    </button>
+
     <div class="route-main">
       <div class="metric"><span>Safety Score</span><strong>${safety==null?"—":safety.toFixed(1)+"/100"}</strong></div>
       <div class="metric"><span>Distance</span><strong>${(route.distance/1000).toFixed(2)} km</strong></div>
@@ -968,12 +989,6 @@ function createRouteCard(route, isBest){
         <div class="detail"><b>🧠 Risk Source</b>${escapeHtml(route.risk_source || "Guardian AI")}</div>
       </div>
 
-      <button
-        class="route-direction-btn"
-        type="button"
-        onclick="event.stopPropagation(); openRouteDirections()">
-        🧭 Get Directions
-      </button>
     </div>
   `;
 

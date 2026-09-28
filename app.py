@@ -12,6 +12,8 @@ import random
 import requests
 import os
 import certifi
+import threading
+import time
 
 
 # ============================================================
@@ -40,7 +42,17 @@ BASE = Path(__file__).resolve().parent
 OSRM_URL = "https://router.project-osrm.org"
 
 NOMINATIM_SEARCH = "https://nominatim.openstreetmap.org/search"
+
 NOMINATIM_REVERSE = "https://nominatim.openstreetmap.org/reverse"
+
+# Geocoding cache and a process-wide request gate for public Nominatim.
+# Public Nominatim requires no more than one request per second per application.
+_GEOCODE_CACHE = {}
+_GEOCODE_CACHE_TTL_SECONDS = 24 * 60 * 60
+_GEOCODE_CACHE_MAX_ITEMS = 300
+_GEOCODE_CACHE_LOCK = threading.Lock()
+_NOMINATIM_REQUEST_LOCK = threading.Lock()
+_LAST_NOMINATIM_REQUEST_AT = 0.0
 
 HEADERS = {
     "User-Agent": "GuardianAI/1.0"
@@ -2161,112 +2173,112 @@ def home():
 
 @app.route("/api/geocode")
 def geocode():
+    query = request.args.get("text", "").strip()
+    if len(query) < 2:
+        return jsonify({"results": []})
 
-    text = request.args.get(
-        "text",
-        ""
-    ).strip()
+    cache_key = " ".join(query.casefold().split())
+    now = time.time()
 
+    # Return cached successful responses without contacting Nominatim.
+    with _GEOCODE_CACHE_LOCK:
+        cached = _GEOCODE_CACHE.get(cache_key)
+        if cached and now - cached["saved_at"] < _GEOCODE_CACHE_TTL_SECONDS:
+            return jsonify({"results": cached["results"], "cached": True})
+        if cached:
+            _GEOCODE_CACHE.pop(cache_key, None)
 
-    if len(text) < 2:
-
-        return jsonify({
-            "results": []
-        })
-
+    params = {
+        "q": query,
+        "format": "jsonv2",
+        "limit": 8,
+        "addressdetails": 1,
+    }
 
     try:
+        # Serialize requests and respect Nominatim's public-service rate limit.
+        global _LAST_NOMINATIM_REQUEST_AT
+        with _NOMINATIM_REQUEST_LOCK:
+            elapsed = time.monotonic() - _LAST_NOMINATIM_REQUEST_AT
+            if elapsed < 1.05:
+                time.sleep(1.05 - elapsed)
 
-        data = http_json(
+            response = requests.get(
+                NOMINATIM_SEARCH,
+                params=params,
+                headers=HEADERS,
+                timeout=20,
+                verify=CERT_VERIFY,
+            )
+            _LAST_NOMINATIM_REQUEST_AT = time.monotonic()
 
-            NOMINATIM_SEARCH,
-
-            {
-
-                "q":
-                    text,
-
-                "format":
-                    "jsonv2",
-
-                "limit":
-                    8,
-
-                "addressdetails":
-                    1
-
-            },
-
-            timeout=15
-
-        )
-
-
-        if not data:
-
+        if response.status_code == 429:
+            print("Geocoding provider returned HTTP 429 (rate limited).")
             return jsonify({
-                "results": []
-            })
+                "error": "Location search is temporarily rate-limited. Please wait a moment and try again.",
+                "results": [],
+                "retryable": True,
+            }), 429
 
+        response.raise_for_status()
+        data = response.json()
+
+        if not isinstance(data, list):
+            return jsonify({
+                "error": "The geocoding provider returned an unexpected response.",
+                "results": [],
+            }), 502
 
         results = []
+        for item in data:
+            if item.get("lat") is None or item.get("lon") is None:
+                continue
+            try:
+                lat = float(item["lat"])
+                lon = float(item["lon"])
+            except (TypeError, ValueError):
+                continue
 
+            results.append({
+                "formatted": item.get("display_name", "Unknown place"),
+                "lat": lat,
+                "lon": lon,
+                "type": item.get("type", "place"),
+            })
 
-        for x in data:
+        with _GEOCODE_CACHE_LOCK:
+            if len(_GEOCODE_CACHE) >= _GEOCODE_CACHE_MAX_ITEMS:
+                oldest_key = min(
+                    _GEOCODE_CACHE,
+                    key=lambda key: _GEOCODE_CACHE[key]["saved_at"]
+                )
+                _GEOCODE_CACHE.pop(oldest_key, None)
+            _GEOCODE_CACHE[cache_key] = {
+                "results": results,
+                "saved_at": time.time(),
+            }
 
-            if (
-                x.get("lat")
-                and
-                x.get("lon")
-            ):
+        return jsonify({"results": results, "cached": False})
 
-                results.append({
-
-                    "formatted":
-                        x.get(
-                            "display_name",
-                            "Unknown place"
-                        ),
-
-                    "lat":
-                        float(
-                            x["lat"]
-                        ),
-
-                    "lon":
-                        float(
-                            x["lon"]
-                        ),
-
-                    "type":
-                        x.get(
-                            "type",
-                            "place"
-                        )
-
-                })
-
-
+    except requests.exceptions.HTTPError as exc:
+        status = exc.response.status_code if exc.response is not None else 502
+        print(f"Geocode HTTP error ({status}): {exc}")
         return jsonify({
-            "results": results
-        })
-
-
-    except Exception as exc:
-
-        print(
-            f"Geocode error: {exc}"
-        )
-
-        return jsonify({
-
-            "error":
-                str(exc),
-
-            "results":
-                []
-
+            "error": f"Geocoding provider returned HTTP {status}. Please try again later.",
+            "results": [],
         }), 502
+    except requests.exceptions.RequestException as exc:
+        print(f"Geocode network error: {exc}")
+        return jsonify({
+            "error": "Could not reach the location search provider. Please try again later.",
+            "results": [],
+        }), 502
+    except Exception as exc:
+        app.logger.exception("Unexpected geocode error")
+        return jsonify({
+            "error": "An unexpected location-search error occurred.",
+            "results": [],
+        }), 500
 
 
 # ============================================================

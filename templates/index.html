@@ -1,633 +1,1521 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Guardian AI | Personal Safety</title>
 
-  <link rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        crossorigin="">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 
   <style>
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:#f7f9fc;
-      color:#142033;
+    * {
+      box-sizing: border-box
     }
-    a{text-decoration:none;color:inherit}
-    button,input{font:inherit}
-    .container{width:min(1180px,92%);margin:auto}
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f7f9fc;
+      color: #142033;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit
+    }
+
+    button,
+    input {
+      font: inherit
+    }
+
+    .container {
+      width: min(1180px, 92%);
+      margin: auto
+    }
 
     /* ---------- NAV ---------- */
-    nav{
-      position:sticky;top:0;z-index:1000;
-      background:rgba(255,255,255,.94);
-      backdrop-filter:blur(12px);
-      border-bottom:1px solid #e6ebf2;
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(255, 255, 255, .94);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e6ebf2;
     }
-    .nav-inner{
-      height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px
+
+    .nav-inner {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px
     }
-    .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:21px}
-    .brand-icon{
-      width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
-      background:#155eef;color:#fff;font-size:20px
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-weight: 800;
+      font-size: 21px
     }
-    .nav-links{display:flex;align-items:center;gap:26px;color:#596579;font-weight:600}
-    .nav-links a:hover{color:#155eef}
-    .nav-chatbot{
-      display:inline-flex;align-items:center;justify-content:center;
-      background:#7c3aed;color:#fff;padding:11px 17px;border-radius:10px;
-      font-weight:700;white-space:nowrap
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: #155eef;
+      color: #fff;
+      font-size: 20px
     }
-    .nav-chatbot:hover{background:#6d28d9;color:#fff}
-    .nav-emergency{
-      border:0;background:#dc3545;color:white;padding:11px 17px;border-radius:10px;
-      font-weight:700;cursor:pointer
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      color: #596579;
+      font-weight: 600
+    }
+
+    .nav-links a:hover {
+      color: #155eef
+    }
+
+    .nav-chatbot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #7c3aed;
+      color: #fff;
+      padding: 11px 17px;
+      border-radius: 10px;
+      font-weight: 700;
+      white-space: nowrap
+    }
+
+    .nav-chatbot:hover {
+      background: #6d28d9;
+      color: #fff
+    }
+
+    .nav-emergency {
+      border: 0;
+      background: #dc3545;
+      color: white;
+      padding: 11px 17px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer
     }
 
     /* ---------- HERO ---------- */
-    .hero{padding:76px 0 60px;background:linear-gradient(180deg,#fff 0%,#f7f9fc 100%)}
-    .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:45px;align-items:center}
-    .eyebrow{
-      display:inline-flex;align-items:center;gap:8px;
-      color:#155eef;background:#eef4ff;border:1px solid #d8e5ff;
-      padding:7px 12px;border-radius:999px;font-weight:800;font-size:13px
+    .hero {
+      padding: 76px 0 60px;
+      background: linear-gradient(180deg, #fff 0%, #f7f9fc 100%)
     }
-    .hero h1{font-size:clamp(42px,6vw,68px);line-height:1.03;margin:18px 0 18px;letter-spacing:-2px}
-    .hero h1 span{color:#155eef}
-    .hero p{font-size:18px;line-height:1.7;color:#657184;max-width:650px}
-    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:27px}
-    .btn{
-      border:0;border-radius:11px;padding:13px 20px;font-weight:800;cursor:pointer;
-      transition:.2s transform,.2s box-shadow
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 45px;
+      align-items: center
     }
-    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,40,80,.12)}
-    .btn-primary{background:#155eef;color:#fff}
-    .btn-secondary{background:#fff;color:#17304f;border:1px solid #dbe2eb}
-    .hero-card{
-      background:#fff;border:1px solid #e2e9f2;border-radius:24px;padding:28px;
-      box-shadow:0 20px 55px rgba(31,55,90,.10)
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #155eef;
+      background: #eef4ff;
+      border: 1px solid #d8e5ff;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px
     }
-    .shield{font-size:64px;margin-bottom:10px}
-    .hero-card h3{margin:0 0 8px;font-size:24px}
-    .hero-card p{margin:0;font-size:15px}
-    .status{
-      display:inline-flex;align-items:center;gap:7px;margin-top:22px;
-      padding:8px 12px;border-radius:999px;background:#ecfdf3;color:#15803d;font-weight:700
+
+    .hero h1 {
+      font-size: clamp(42px, 6vw, 68px);
+      line-height: 1.03;
+      margin: 18px 0 18px;
+      letter-spacing: -2px
     }
-    .dot{width:8px;height:8px;border-radius:50%;background:#22c55e}
+
+    .hero h1 span {
+      color: #155eef
+    }
+
+    .hero p {
+      font-size: 18px;
+      line-height: 1.7;
+      color: #657184;
+      max-width: 650px
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 27px
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 11px;
+      padding: 13px 20px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .2s transform, .2s box-shadow
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(20, 40, 80, .12)
+    }
+
+    .btn-primary {
+      background: #155eef;
+      color: #fff
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: #17304f;
+      border: 1px solid #dbe2eb
+    }
+
+    .hero-card {
+      background: #fff;
+      border: 1px solid #e2e9f2;
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 20px 55px rgba(31, 55, 90, .10)
+    }
+
+    .shield {
+      font-size: 64px;
+      margin-bottom: 10px
+    }
+
+    .hero-card h3 {
+      margin: 0 0 8px;
+      font-size: 24px
+    }
+
+    .hero-card p {
+      margin: 0;
+      font-size: 15px
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 22px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #ecfdf3;
+      color: #15803d;
+      font-weight: 700
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e
+    }
 
     /* ---------- FEATURES ---------- */
-    section{padding:72px 0}
-    .section-head{text-align:center;max-width:720px;margin:0 auto 36px}
-    .section-head small{color:#155eef;font-weight:900;letter-spacing:1.5px;text-transform:uppercase}
-    .section-head h2{font-size:36px;margin:9px 0}
-    .section-head p{color:#687588;line-height:1.65}
-    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-    .feature{
-      background:#fff;border:1px solid #e3e9f1;border-radius:18px;padding:26px;
-      transition:.2s transform,.2s box-shadow
+    section {
+      padding: 72px 0
     }
-    .feature:hover{transform:translateY(-5px);box-shadow:0 15px 35px rgba(30,55,90,.10)}
-    .feature-icon{
-      width:50px;height:50px;border-radius:14px;display:grid;place-items:center;
-      background:#eef4ff;font-size:24px;margin-bottom:17px
+
+    .section-head {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 36px
     }
-    .feature h3{margin:0 0 8px;font-size:20px}
-    .feature p{color:#687588;line-height:1.6;margin:0 0 18px}
-    .feature button{border:0;background:none;color:#155eef;font-weight:800;cursor:pointer;padding:0}
+
+    .section-head small {
+      color: #155eef;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase
+    }
+
+    .section-head h2 {
+      font-size: 36px;
+      margin: 9px 0
+    }
+
+    .section-head p {
+      color: #687588;
+      line-height: 1.65
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px
+    }
+
+    .feature {
+      background: #fff;
+      border: 1px solid #e3e9f1;
+      border-radius: 18px;
+      padding: 26px;
+      transition: .2s transform, .2s box-shadow
+    }
+
+    .feature:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(30, 55, 90, .10)
+    }
+
+    .feature-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: #eef4ff;
+      font-size: 24px;
+      margin-bottom: 17px
+    }
+
+    .feature h3 {
+      margin: 0 0 8px;
+      font-size: 20px
+    }
+
+    .feature p {
+      color: #687588;
+      line-height: 1.6;
+      margin: 0 0 18px
+    }
+
+    .feature button {
+      border: 0;
+      background: none;
+      color: #155eef;
+      font-weight: 800;
+      cursor: pointer;
+      padding: 0
+    }
 
     /* ---------- ROUTE FINDER ---------- */
-    #safe-route{scroll-margin-top:90px}
-    .route-shell{
-      background:#fff;border:1px solid #dfe6ef;border-radius:22px;
-      box-shadow:0 15px 45px rgba(24,50,80,.08);overflow:hidden
+    #safe-route {
+      scroll-margin-top: 90px
     }
-    .route-top{padding:24px;border-bottom:1px solid #e8edf3}
-    .route-title{display:flex;align-items:center;justify-content:space-between;gap:20px}
-    .route-title h2{margin:0;font-size:27px}
-    .live{font-size:12px;color:#16803b;font-weight:800}
-    .search-row{
-      display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:20px
-    }
-    .field{position:relative}
-    .field label{display:block;font-size:11px;font-weight:900;color:#667286;margin:0 0 6px;text-transform:uppercase}
-    .field input{
-      width:100%;height:45px;border:1px solid #d8e0ea;border-radius:9px;padding:0 13px;
-      outline:none;background:#fff
-    }
-    .field input:focus{border-color:#155eef;box-shadow:0 0 0 3px #eaf1ff}
-    .suggestions{
-      position:absolute;top:75px;left:0;right:0;z-index:1200;background:#fff;
-      border:1px solid #dbe3ed;border-radius:10px;box-shadow:0 15px 35px rgba(20,40,70,.12);
-      max-height:270px;overflow:auto;display:none
-    }
-    .suggestion{padding:11px 13px;cursor:pointer;border-bottom:1px solid #eef1f5}
-    .suggestion:hover{background:#f5f8ff}
-    .suggestion strong{display:block;font-size:13px}
-    .suggestion span{font-size:11px;color:#778296}
-    .current-row{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
-    .location-status{font-size:12px;color:#5f6d80}
-    .btn-small{padding:9px 12px;border-radius:8px;font-size:13px}
-    .quick-dests{display:flex;gap:8px;overflow:auto;margin-top:13px;padding-bottom:3px}
-    .chip{
-      white-space:nowrap;border:1px solid #dce4ee;background:#fff;border-radius:999px;
-      padding:7px 10px;font-size:12px;cursor:pointer;color:#405067
-    }
-    .chip:hover{border-color:#155eef;color:#155eef}
 
-    .map-wrap{padding:12px;position:relative}
-    #routeMap{height:520px;border-radius:14px;overflow:hidden;border:1px solid #dbe3ec}
-    .map-note{padding:9px 14px;color:#6a7687;font-size:11px}
-    .map-legend{
-      position:absolute;right:22px;bottom:22px;z-index:500;background:#fff;border-radius:10px;
-      box-shadow:0 5px 18px rgba(20,40,70,.15);padding:11px;font-size:11px
+    .route-shell {
+      background: #fff;
+      border: 1px solid #dfe6ef;
+      border-radius: 22px;
+      box-shadow: 0 15px 45px rgba(24, 50, 80, .08);
+      overflow: hidden
     }
-    .legend-row{display:flex;align-items:center;gap:7px;margin:5px 0}
-    .line{width:22px;height:4px;border-radius:4px}
-    .marker{width:10px;height:10px;border-radius:50%}
 
-    .results{padding:0 24px 25px}
-    .results-head{display:flex;justify-content:space-between;align-items:center;margin:12px 0}
-    .results-head h3{margin:0;font-size:17px}
-    .muted{color:#738095;font-size:12px}
-    .route-card{
-      border:1px solid #dfe6ee;border-radius:13px;padding:17px;margin-top:10px;
-      cursor:pointer;background:#fff;transition:.18s
+    .route-top {
+      padding: 24px;
+      border-bottom: 1px solid #e8edf3
     }
-    .route-card:hover{border-color:#8fb3ff;box-shadow:0 6px 18px rgba(21,94,239,.08)}
-    .route-card.best{border-color:#27ae60;background:#f3fff8}
-    .route-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .route-name{font-weight:900}
-    .badge{
-      display:inline-flex;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900
+
+    .route-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px
     }
-    .best-badge{background:#dff7e8;color:#15803d}
-    .risk-low{background:#eaf7ef;color:#15803d}
-    .risk-med{background:#fff4df;color:#b76b00}
-    .risk-high{background:#ffe8e8;color:#c62828}
-    .risk-very-safe{background:#d1fae5;color:#065f46}
-    .route-main{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:13px}
-    .metric{background:#f7f9fb;border-radius:9px;padding:10px}
-    .metric span{display:block;color:#778396;font-size:10px}
-    .metric strong{display:block;margin-top:4px;font-size:14px}
-    .route-details{margin-top:12px;padding-top:12px;border-top:1px solid #edf0f4;display:none}
-    .route-card.selected .route-details{display:block}
-    .route-direction-btn{
-      margin-top:14px;
-      width:100%;
-      border:0;
-      border-radius:10px;
-      padding:11px 14px;
-      background:#155eef;
-      color:#fff;
-      font-weight:800;
-      cursor:pointer;
-      transition:.2s transform,.2s box-shadow,.2s background;
+
+    .route-title h2 {
+      margin: 0;
+      font-size: 27px
     }
-    .route-direction-btn:hover{
-      background:#0f4dcc;
-      transform:translateY(-1px);
-      box-shadow:0 7px 18px rgba(21,94,239,.18);
+
+    .live {
+      font-size: 12px;
+      color: #16803b;
+      font-weight: 800
     }
-    .detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-    .detail{font-size:11px;color:#596579}
-    .detail b{display:block;color:#182438;margin-bottom:2px}
-    .empty{padding:30px;text-align:center;color:#748095}
-    .loading{padding:22px;text-align:center;color:#155eef;font-weight:700}
-    .loading-spinner{display:inline-block;width:18px;height:18px;border:3px solid #dbe7ff;border-top-color:#155eef;border-radius:50%;animation:guardianSpin .8s linear infinite;vertical-align:-4px;margin-right:8px}
-    @keyframes guardianSpin{to{transform:rotate(360deg)}}
-    .find-route-wrap{display:flex;align-items:end;min-width:0}
-    .find-route-btn{height:45px;width:100%;min-width:0;white-space:nowrap}
-    .find-route-btn:disabled{opacity:.7;cursor:wait}
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 10px;
+      margin-top: 20px
+    }
+
+    .field {
+      position: relative
+    }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 900;
+      color: #667286;
+      margin: 0 0 6px;
+      text-transform: uppercase
+    }
+
+    .field input {
+      width: 100%;
+      height: 45px;
+      border: 1px solid #d8e0ea;
+      border-radius: 9px;
+      padding: 0 13px;
+      outline: none;
+      background: #fff
+    }
+
+    .field input:focus {
+      border-color: #155eef;
+      box-shadow: 0 0 0 3px #eaf1ff
+    }
+
+    .suggestions {
+      position: absolute;
+      top: 75px;
+      left: 0;
+      right: 0;
+      z-index: 1200;
+      background: #fff;
+      border: 1px solid #dbe3ed;
+      border-radius: 10px;
+      box-shadow: 0 15px 35px rgba(20, 40, 70, .12);
+      max-height: 270px;
+      overflow: auto;
+      display: none
+    }
+
+    .suggestion {
+      padding: 11px 13px;
+      cursor: pointer;
+      border-bottom: 1px solid #eef1f5
+    }
+
+    .suggestion:hover {
+      background: #f5f8ff
+    }
+
+    .suggestion strong {
+      display: block;
+      font-size: 13px
+    }
+
+    .suggestion span {
+      font-size: 11px;
+      color: #778296
+    }
+
+    .current-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap
+    }
+
+    .location-status {
+      font-size: 12px;
+      color: #5f6d80
+    }
+
+    .btn-small {
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13px
+    }
+
+    .quick-dests {
+      display: flex;
+      gap: 8px;
+      overflow: auto;
+      margin-top: 13px;
+      padding-bottom: 3px
+    }
+
+    .chip {
+      white-space: nowrap;
+      border: 1px solid #dce4ee;
+      background: #fff;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #405067
+    }
+
+    .chip:hover {
+      border-color: #155eef;
+      color: #155eef
+    }
+
+    .map-wrap {
+      padding: 12px;
+      position: relative
+    }
+
+    #routeMap {
+      height: 520px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #dbe3ec
+    }
+
+    .map-note {
+      padding: 9px 14px;
+      color: #6a7687;
+      font-size: 11px
+    }
+
+    .map-legend {
+      position: absolute;
+      right: 22px;
+      bottom: 22px;
+      z-index: 500;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 5px 18px rgba(20, 40, 70, .15);
+      padding: 11px;
+      font-size: 11px
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 5px 0
+    }
+
+    .line {
+      width: 22px;
+      height: 4px;
+      border-radius: 4px
+    }
+
+    .marker {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%
+    }
+
+    .results {
+      padding: 0 24px 25px
+    }
+
+    .results-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 12px 0
+    }
+
+    .results-head h3 {
+      margin: 0;
+      font-size: 17px
+    }
+
+    .muted {
+      color: #738095;
+      font-size: 12px
+    }
+
+    .route-card {
+      border: 1px solid #dfe6ee;
+      border-radius: 13px;
+      padding: 17px;
+      margin-top: 10px;
+      cursor: pointer;
+      background: #fff;
+      transition: .18s
+    }
+
+    .route-card:hover {
+      border-color: #8fb3ff;
+      box-shadow: 0 6px 18px rgba(21, 94, 239, .08)
+    }
+
+    .route-card.best {
+      border-color: #27ae60;
+      background: #f3fff8
+    }
+
+    .route-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px
+    }
+
+    .route-name {
+      font-weight: 900
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900
+    }
+
+    .best-badge {
+      background: #dff7e8;
+      color: #15803d
+    }
+
+    .risk-low {
+      background: #eaf7ef;
+      color: #15803d
+    }
+
+    .risk-med {
+      background: #fff4df;
+      color: #b76b00
+    }
+
+    .risk-high {
+      background: #ffe8e8;
+      color: #c62828
+    }
+
+    .risk-very-safe {
+      background: #d1fae5;
+      color: #065f46
+    }
+
+    .route-main {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 9px;
+      margin-top: 13px
+    }
+
+    .metric {
+      background: #f7f9fb;
+      border-radius: 9px;
+      padding: 10px
+    }
+
+    .metric span {
+      display: block;
+      color: #778396;
+      font-size: 10px
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 14px
+    }
+
+    .route-details {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #edf0f4;
+      display: none
+    }
+
+    .route-card.selected .route-details {
+      display: block
+    }
+
+    .route-direction-btn {
+      margin-top: 14px;
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 14px;
+      background: #155eef;
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .2s transform, .2s box-shadow, .2s background;
+    }
+
+    .route-direction-btn:hover {
+      background: #0f4dcc;
+      transform: translateY(-1px);
+      box-shadow: 0 7px 18px rgba(21, 94, 239, .18);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px
+    }
+
+    .detail {
+      font-size: 11px;
+      color: #596579
+    }
+
+    .detail b {
+      display: block;
+      color: #182438;
+      margin-bottom: 2px
+    }
+
+    .empty {
+      padding: 30px;
+      text-align: center;
+      color: #748095
+    }
+
+    .loading {
+      padding: 22px;
+      text-align: center;
+      color: #155eef;
+      font-weight: 700
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid #dbe7ff;
+      border-top-color: #155eef;
+      border-radius: 50%;
+      animation: guardianSpin .8s linear infinite;
+      vertical-align: -4px;
+      margin-right: 8px
+    }
+
+    @keyframes guardianSpin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .find-route-wrap {
+      display: flex;
+      align-items: end;
+      min-width: 0
+    }
+
+    .find-route-btn {
+      height: 45px;
+      width: 100%;
+      min-width: 0;
+      white-space: nowrap
+    }
+
+    .find-route-btn:disabled {
+      opacity: .7;
+      cursor: wait
+    }
+
+    .location-search-control {
+      display: flex;
+      gap: 8px;
+      align-items: stretch
+    }
+
+    .location-search-control input {
+      flex: 1;
+      min-width: 0
+    }
+
+    .location-search-btn {
+      border: 1px solid #cbd8eb;
+      background: #eef4ff;
+      color: #155eef;
+      border-radius: 10px;
+      padding: 0 14px;
+      font-weight: 800;
+      cursor: pointer
+    }
+
+    .location-search-btn:hover {
+      background: #dce9ff
+    }
+
+    .location-search-btn:disabled {
+      opacity: .6;
+      cursor: wait
+    }
 
 
     /* ---------- OTHER FEATURES ---------- */
-    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-    .info-card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:26px}
-    .info-card h3{margin-top:0}
-    .info-card p{color:#687588;line-height:1.6}
-    .status-box{
-      background:#f8fafc;border:1px dashed #ccd6e3;padding:16px;border-radius:12px;
-      color:#657184;font-size:13px
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px
+    }
+
+    .info-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 26px
+    }
+
+    .info-card h3 {
+      margin-top: 0
+    }
+
+    .info-card p {
+      color: #687588;
+      line-height: 1.6
+    }
+
+    .status-box {
+      background: #f8fafc;
+      border: 1px dashed #ccd6e3;
+      padding: 16px;
+      border-radius: 12px;
+      color: #657184;
+      font-size: 13px
     }
 
     /* ---------- FOOTER ---------- */
-    footer{background:#101b2c;color:#dce5f2;padding:40px 0}
-    .footer-grid{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap}
-    footer p{color:#9eabc0;margin:6px 0}
-    .emergency{
-      position:fixed;right:20px;bottom:20px;z-index:1300;
-      background:#dc3545;color:#fff;border:0;border-radius:999px;padding:14px 20px;
-      font-weight:900;box-shadow:0 10px 25px rgba(220,53,69,.28);cursor:pointer
+    footer {
+      background: #101b2c;
+      color: #dce5f2;
+      padding: 40px 0
+    }
+
+    .footer-grid {
+      display: flex;
+      justify-content: space-between;
+      gap: 30px;
+      flex-wrap: wrap
+    }
+
+    footer p {
+      color: #9eabc0;
+      margin: 6px 0
+    }
+
+    .emergency {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 1300;
+      background: #dc3545;
+      color: #fff;
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 20px;
+      font-weight: 900;
+      box-shadow: 0 10px 25px rgba(220, 53, 69, .28);
+      cursor: pointer
     }
 
     /* ---------- BLUETOOTH SAFETY MODAL ---------- */
-    .bt-modal{
-      position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;
-      padding:22px;background:rgba(9,18,35,.58);backdrop-filter:blur(8px)
-    }
-    .bt-modal.open{display:flex}
-    .bt-panel{
-      width:min(720px,100%);max-height:min(90vh,820px);overflow:auto;background:#fff;
-      border:1px solid #e2e8f0;border-radius:24px;box-shadow:0 30px 80px rgba(10,25,50,.28)
-    }
-    .bt-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 24px;border-bottom:1px solid #edf1f5}
-    .bt-title-wrap{display:flex;align-items:center;gap:13px}
-    .bt-icon{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:#eef4ff;font-size:25px}
-    .bt-head h2{margin:0;font-size:22px}
-    .bt-head p{margin:4px 0 0;color:#718096;font-size:12px}
-    .bt-close{border:0;background:#f3f5f8;color:#475569;width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer}
-    .bt-body{padding:24px}
-    .bt-status{display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:13px;background:#f5f8fc;color:#526176;font-size:13px;font-weight:700;margin-bottom:16px}
-    .bt-status.success{background:#ecfdf3;color:#15803d}.bt-status.error{background:#fff1f2;color:#be123c}.bt-status.warning{background:#fff8e7;color:#a16207}
-    .bt-status-dot{width:9px;height:9px;border-radius:50%;background:#94a3b8;flex:0 0 auto}
-    .bt-status.success .bt-status-dot{background:#22c55e}.bt-status.error .bt-status-dot{background:#ef4444}.bt-status.warning .bt-status-dot{background:#f59e0b}
-    .bt-card{border:1px solid #e4eaf2;border-radius:17px;padding:18px;margin-top:14px;background:#fff}
-    .bt-card h3{margin:0 0 7px;font-size:16px}.bt-card p{margin:0;color:#6b778b;font-size:13px;line-height:1.55}
-    .bt-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
-    .bt-btn{border:0;border-radius:11px;padding:12px 14px;font-weight:800;cursor:pointer;transition:.18s}
-    .bt-btn:hover:not(:disabled){transform:translateY(-1px)}.bt-btn:disabled{opacity:.45;cursor:not-allowed}
-    .bt-connect{background:#155eef;color:#fff}.bt-message{background:#eef4ff;color:#155eef}.bt-danger{background:#dc3545;color:#fff}.bt-secondary{background:#f1f4f8;color:#344054}
-    .bt-device{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;border-radius:12px;background:#f8fafc;border:1px solid #e6ebf2;margin-top:14px}
-    .bt-device strong{display:block;font-size:13px}.bt-device span{display:block;color:#778296;font-size:11px;margin-top:3px}
-    .bt-badge{padding:5px 8px;border-radius:999px;background:#dcfce7;color:#15803d;font-size:10px;font-weight:900;white-space:nowrap}
-    .bt-location{background:#f8fafc;border:1px solid #e5eaf1;border-radius:13px;padding:14px;margin-top:14px;font-size:12px;color:#5d6a7e}
-    .bt-location strong{color:#172033}.bt-location a{display:inline-block;margin-top:8px;color:#155eef;font-weight:800}
-    .bt-message-box textarea{width:100%;min-height:80px;resize:none;border:1px solid #d7e0eb;border-radius:11px;padding:12px;outline:none;font:inherit;font-size:13px}
-    .bt-message-box textarea:focus{border-color:#155eef;box-shadow:0 0 0 3px #eaf1ff}
-    .bt-counter{display:flex;justify-content:space-between;margin-top:6px;color:#7b8798;font-size:11px}
-    .bt-note{margin-top:15px;color:#8a96a8;font-size:11px;line-height:1.5}
-    .bt-divider{height:1px;background:#edf1f5;margin:18px 0}
-    @media(max-width:600px){
-      .bt-modal{padding:10px}.bt-panel{border-radius:18px}.bt-body{padding:17px}.bt-actions{grid-template-columns:1fr}
-      .bt-head{padding:17px}.bt-device{align-items:flex-start;flex-direction:column}
+    .bt-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      background: rgba(9, 18, 35, .58);
+      backdrop-filter: blur(8px)
     }
 
-    @media(max-width:850px){
-      .hero-grid,.features,.info-grid{grid-template-columns:1fr}
-      .nav-links{display:none}
-      .search-row{grid-template-columns:1fr}
-      .find-route-wrap{width:100%}
-      .find-route-btn{width:100%}
-      .route-main{grid-template-columns:repeat(2,1fr)}
-      .detail-grid{grid-template-columns:1fr 1fr}
-      #routeMap{height:430px}
+    .bt-modal.open {
+      display: flex
+    }
+
+    .bt-panel {
+      width: min(720px, 100%);
+      max-height: min(90vh, 820px);
+      overflow: auto;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 24px;
+      box-shadow: 0 30px 80px rgba(10, 25, 50, .28)
+    }
+
+    .bt-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 24px;
+      border-bottom: 1px solid #edf1f5
+    }
+
+    .bt-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 13px
+    }
+
+    .bt-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: #eef4ff;
+      font-size: 25px
+    }
+
+    .bt-head h2 {
+      margin: 0;
+      font-size: 22px
+    }
+
+    .bt-head p {
+      margin: 4px 0 0;
+      color: #718096;
+      font-size: 12px
+    }
+
+    .bt-close {
+      border: 0;
+      background: #f3f5f8;
+      color: #475569;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer
+    }
+
+    .bt-body {
+      padding: 24px
+    }
+
+    .bt-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 15px;
+      border-radius: 13px;
+      background: #f5f8fc;
+      color: #526176;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px
+    }
+
+    .bt-status.success {
+      background: #ecfdf3;
+      color: #15803d
+    }
+
+    .bt-status.error {
+      background: #fff1f2;
+      color: #be123c
+    }
+
+    .bt-status.warning {
+      background: #fff8e7;
+      color: #a16207
+    }
+
+    .bt-status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #94a3b8;
+      flex: 0 0 auto
+    }
+
+    .bt-status.success .bt-status-dot {
+      background: #22c55e
+    }
+
+    .bt-status.error .bt-status-dot {
+      background: #ef4444
+    }
+
+    .bt-status.warning .bt-status-dot {
+      background: #f59e0b
+    }
+
+    .bt-card {
+      border: 1px solid #e4eaf2;
+      border-radius: 17px;
+      padding: 18px;
+      margin-top: 14px;
+      background: #fff
+    }
+
+    .bt-card h3 {
+      margin: 0 0 7px;
+      font-size: 16px
+    }
+
+    .bt-card p {
+      margin: 0;
+      color: #6b778b;
+      font-size: 13px;
+      line-height: 1.55
+    }
+
+    .bt-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px
+    }
+
+    .bt-btn {
+      border: 0;
+      border-radius: 11px;
+      padding: 12px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .18s
+    }
+
+    .bt-btn:hover:not(:disabled) {
+      transform: translateY(-1px)
+    }
+
+    .bt-btn:disabled {
+      opacity: .45;
+      cursor: not-allowed
+    }
+
+    .bt-connect {
+      background: #155eef;
+      color: #fff
+    }
+
+    .bt-message {
+      background: #eef4ff;
+      color: #155eef
+    }
+
+    .bt-danger {
+      background: #dc3545;
+      color: #fff
+    }
+
+    .bt-secondary {
+      background: #f1f4f8;
+      color: #344054
+    }
+
+    .bt-device {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e6ebf2;
+      margin-top: 14px
+    }
+
+    .bt-device strong {
+      display: block;
+      font-size: 13px
+    }
+
+    .bt-device span {
+      display: block;
+      color: #778296;
+      font-size: 11px;
+      margin-top: 3px
+    }
+
+    .bt-badge {
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: #dcfce7;
+      color: #15803d;
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap
+    }
+
+    .bt-location {
+      background: #f8fafc;
+      border: 1px solid #e5eaf1;
+      border-radius: 13px;
+      padding: 14px;
+      margin-top: 14px;
+      font-size: 12px;
+      color: #5d6a7e
+    }
+
+    .bt-location strong {
+      color: #172033
+    }
+
+    .bt-location a {
+      display: inline-block;
+      margin-top: 8px;
+      color: #155eef;
+      font-weight: 800
+    }
+
+    .bt-message-box textarea {
+      width: 100%;
+      min-height: 80px;
+      resize: none;
+      border: 1px solid #d7e0eb;
+      border-radius: 11px;
+      padding: 12px;
+      outline: none;
+      font: inherit;
+      font-size: 13px
+    }
+
+    .bt-message-box textarea:focus {
+      border-color: #155eef;
+      box-shadow: 0 0 0 3px #eaf1ff
+    }
+
+    .bt-counter {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      color: #7b8798;
+      font-size: 11px
+    }
+
+    .bt-note {
+      margin-top: 15px;
+      color: #8a96a8;
+      font-size: 11px;
+      line-height: 1.5
+    }
+
+    .bt-divider {
+      height: 1px;
+      background: #edf1f5;
+      margin: 18px 0
+    }
+
+    @media(max-width:600px) {
+      .bt-modal {
+        padding: 10px
+      }
+
+      .bt-panel {
+        border-radius: 18px
+      }
+
+      .bt-body {
+        padding: 17px
+      }
+
+      .bt-actions {
+        grid-template-columns: 1fr
+      }
+
+      .bt-head {
+        padding: 17px
+      }
+
+      .bt-device {
+        align-items: flex-start;
+        flex-direction: column
+      }
+    }
+
+    @media(max-width:850px) {
+
+      .hero-grid,
+      .features,
+      .info-grid {
+        grid-template-columns: 1fr
+      }
+
+      .nav-links {
+        display: none
+      }
+
+      .search-row {
+        grid-template-columns: 1fr
+      }
+
+      .find-route-wrap {
+        width: 100%
+      }
+
+      .find-route-btn {
+        width: 100%
+      }
+
+      .route-main {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      #routeMap {
+        height: 430px
+      }
     }
   </style>
 </head>
 
 <body>
 
-<nav>
-  <div class="container nav-inner">
-    <a class="brand" href="#home">
-      <span class="brand-icon">🛡️</span>
-      <span>Guardian AI</span>
-    </a>
+  <nav>
+    <div class="container nav-inner">
+      <a class="brand" href="#home">
+        <span class="brand-icon">🛡️</span>
+        <span>Guardian AI</span>
+      </a>
 
-    <div class="nav-links">
-      <a href="#home">Home</a>
-      <a href="#features">Features</a>
-      <a href="#safe-route">Safe Route</a>
-      <a href="#contact">Contact</a>
+      <div class="nav-links">
+        <a href="#home">Home</a>
+        <a href="#features">Features</a>
+        <a href="#safe-route">Safe Route</a>
+        <a href="#contact">Contact</a>
+      </div>
+
+      <a class="nav-chatbot" href="https://ai-agent-z6im.onrender.com/" target="_blank" rel="noopener noreferrer">
+        🤖 AI Chatbot
+      </a>
+      <button class="nav-emergency" onclick="window.location.href='https://sms-send-kae4.onrender.com/'">
+        🚨 Emergency
+      </button>
     </div>
+  </nav>
 
-    <a class="nav-chatbot" href="https://ai-agent-z6im.onrender.com/" target="_blank" rel="noopener noreferrer">
-      🤖 AI Chatbot
-    </a>
-    <button class="nav-emergency" onclick="window.location.href='https://sms-send-kae4.onrender.com/'">
-      🚨 Emergency
-    </button>
-  </div>
-</nav>
+  <main id="home">
 
-<main id="home">
-
-  <section class="hero">
-    <div class="container hero-grid">
-      <div>
-        <span class="eyebrow">● Personal Safety Platform</span>
-        <h1>Your safety,<br><span>always one step ahead.</span></h1>
-        <p>
-          Guardian AI brings safer route planning, GPS movement monitoring
-          and Bluetooth safety into one simple platform — without login or authentication.
-        </p>
-
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#features">Explore Features</a>
-          <a class="btn btn-secondary" href="#safe-route">Find a Safe Route →</a>
-        </div>
-      </div>
-
-      <div class="hero-card">
-        <div class="shield">🛡️</div>
-        <h3>Guardian AI</h3>
-        <p>
-          A personal safety assistant designed to help you choose safer routes
-          and monitor unexpected movement or emergency situations.
-        </p>
-        <div class="status"><span class="dot"></span> Safety services available</div>
-      </div>
-    </div>
-  </section>
-
-  <section id="features">
-    <div class="container">
-      <div class="section-head">
-        <small>Guardian AI tools</small>
-        <h2>Three safety features. One platform.</h2>
-        <p>
-          Use the feature you need without navigating through accounts,
-          dashboards or unnecessary screens.
-        </p>
-      </div>
-
-      <div class="features">
-        <article class="feature">
-          <div class="feature-icon">🗺️</div>
-          <h3>Safe Route</h3>
-          <p>Compare multiple OSRM routes using your safety parameters and choose the safest available path.</p>
-          <button onclick="document.getElementById('safe-route').scrollIntoView()">Open Safe Route →</button>
-        </article>
-
-        <article class="feature">
-          <div class="feature-icon">📍</div>
-          <h3>GPS Guardian</h3>
-          <p>Monitor movement, speed and direction changes and connect it to your emergency detection module.</p>
-          <button onclick="window.open('https://emergency-sms-trial-1.onrender.com', '_blank')">Open GPS Guardian →</button>
-        </article>
-
-        <article class="feature">
-          <div class="feature-icon">🔵</div>
-          <h3>Bluetooth Safety</h3>
-          <p>Connect your safety device and use your existing Bluetooth emergency communication feature.</p>
-          <button onclick="openBluetoothSafety()">Open Bluetooth →</button>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section id="safe-route">
-    <div class="container">
-      <div class="section-head">
-        <small>Safe Route Finder</small>
-        <h2>Find a safer way to your destination.</h2>
-        <p>
-          Guardian AI uses your existing OSRM route engine, local Amravati safety
-          dataset and Random Forest risk predictor to compare available routes.
-        </p>
-      </div>
-
-      <div class="route-shell">
-
-        <div class="route-top">
-          <div class="route-title">
-            <h2>🗺️ Safety Route Finder</h2>
-            <span class="live">● Real-time route calculation</span>
-          </div>
-
-          <div class="search-row">
-            <div class="field">
-              <label>Starting location</label>
-              <input id="startInput" placeholder="Current Location" autocomplete="off">
-              <div id="startSuggestions" class="suggestions"></div>
-            </div>
-
-            <div class="field">
-              <label>Destination</label>
-              <input id="destinationInput" placeholder="Search destination..." autocomplete="off">
-              <div id="destinationSuggestions" class="suggestions"></div>
-            </div>
-
-            <div class="find-route-wrap">
-              <button id="findRoutesBtn" class="btn btn-primary find-route-btn">
-                Find Safe Route
-              </button>
-            </div>
-          </div>
-
-          <div class="current-row">
-            <button id="currentLocationBtn" class="btn btn-secondary btn-small">
-              📍 Use Current Location
-            </button>
-            <span id="locationStatus" class="location-status">Waiting for your location.</span>
-          </div>
-
-          <div id="quickDestinations" class="quick-dests"></div>
-        </div>
-
-        <div class="map-wrap">
-          <div style="position:relative">
-            <div id="routeMap"></div>
-            <div class="map-legend">
-              <strong>Map Legend</strong>
-              <div class="legend-row"><span class="line" style="background:#16a34a"></span> Safest Route</div>
-              <div class="legend-row"><span class="line" style="background:#2563eb"></span> Alternative Route</div>
-              <div class="legend-row"><span class="marker" style="background:#2563eb"></span> Low Risk</div>
-              <div class="legend-row"><span class="marker" style="background:#f59e0b"></span> Medium Risk</div>
-              <div class="legend-row"><span class="marker" style="background:#dc2626"></span> High Risk</div>
-            </div>
-          </div>
-          <div class="map-note">
-            Hover a route to highlight it. Click a route line or route card to inspect its safety parameters.
-          </div>
-        </div>
-
-        <div id="routeResults" class="results">
-          <div class="empty">Allow location and select a destination to compare routes.</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="contact">
-    <div class="container">
-      <div class="section-head">
-        <small>Contact</small>
-        <h2>Guardian AI is built around your safety.</h2>
-        <p>Three modules can work together: Safe Route, GPS Guardian and Bluetooth Safety.</p>
-      </div>
-
-      <div class="info-grid">
-        <div class="info-card">
-          <h3>🛡️ Platform Status</h3>
-          <div class="status-box">Guardian AI route engine is connected to OSRM and your local safety data.</div>
-        </div>
-        <div class="info-card">
-          <h3>🚨 Emergency</h3>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="eyebrow">● Personal Safety Platform</span>
+          <h1>Your safety,<br><span>always one step ahead.</span></h1>
           <p>
-            The Emergency button is reserved for the GPS Guardian/Bluetooth
-            emergency workflow that you will connect next.
+            Guardian AI brings safer route planning, GPS movement monitoring
+            and Bluetooth safety into one simple platform — without login or authentication.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#features">Explore Features</a>
+            <a class="btn btn-secondary" href="#safe-route">Find a Safe Route →</a>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <div class="shield">🛡️</div>
+          <h3>Guardian AI</h3>
+          <p>
+            A personal safety assistant designed to help you choose safer routes
+            and monitor unexpected movement or emergency situations.
+          </p>
+          <div class="status"><span class="dot"></span> Safety services available</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="container">
+        <div class="section-head">
+          <small>Guardian AI tools</small>
+          <h2>Three safety features. One platform.</h2>
+          <p>
+            Use the feature you need without navigating through accounts,
+            dashboards or unnecessary screens.
           </p>
         </div>
+
+        <div class="features">
+          <article class="feature">
+            <div class="feature-icon">🗺️</div>
+            <h3>Safe Route</h3>
+            <p>Compare multiple OSRM routes using your safety parameters and choose the safest available path.</p>
+            <button onclick="document.getElementById('safe-route').scrollIntoView()">Open Safe Route →</button>
+          </article>
+
+          <article class="feature">
+            <div class="feature-icon">📍</div>
+            <h3>GPS Guardian</h3>
+            <p>Monitor movement, speed and direction changes and connect it to your emergency detection module.</p>
+            <button onclick="window.open('https://emergency-sms-trial-1.onrender.com', '_blank')">Open GPS Guardian
+              →</button>
+          </article>
+
+          <article class="feature">
+            <div class="feature-icon">🔵</div>
+            <h3>Bluetooth Safety</h3>
+            <p>Connect your safety device and use your existing Bluetooth emergency communication feature.</p>
+            <button onclick="openBluetoothSafety()">Open Bluetooth →</button>
+          </article>
+        </div>
       </div>
-    </div>
-  </section>
-</main>
+    </section>
 
-<button class="emergency" onclick="window.location.href='https://sms-send-kae4.onrender.com/'">
-  🚨 Emergency
-</button>
+    <section id="safe-route">
+      <div class="container">
+        <div class="section-head">
+          <small>Safe Route Finder</small>
+          <h2>Find a safer way to your destination.</h2>
+          <p>
+            Guardian AI uses your existing OSRM route engine, local Amravati safety
+            dataset and Random Forest risk predictor to compare available routes.
+          </p>
+        </div>
+
+        <div class="route-shell">
+
+          <div class="route-top">
+            <div class="route-title">
+              <h2>🗺️ Safety Route Finder</h2>
+              <span class="live">● Real-time route calculation</span>
+            </div>
+
+            <div class="search-row">
+              <div class="field">
+                <label>Starting location</label>
+                <div class="location-search-control">
+                  <input id="startInput" placeholder="Enter starting location..." autocomplete="off">
+                  <button type="button" class="location-search-btn" id="searchStartBtn">Search</button>
+                </div>
+                <div id="startSuggestions" class="suggestions"></div>
+              </div>
+
+              <div class="field">
+                <label>Destination</label>
+                <div class="location-search-control">
+                  <input id="destinationInput" placeholder="Search destination..." autocomplete="off">
+                  <button type="button" class="location-search-btn" id="searchDestinationBtn">Search</button>
+                </div>
+                <div id="destinationSuggestions" class="suggestions"></div>
+              </div>
+
+              <div class="find-route-wrap">
+                <button id="findRoutesBtn" class="btn btn-primary find-route-btn">
+                  Find Safe Route
+                </button>
+              </div>
+            </div>
+
+            <div class="current-row">
+              <button id="currentLocationBtn" class="btn btn-secondary btn-small">
+                📍 Use Current Location
+              </button>
+              <span id="locationStatus" class="location-status">Waiting for your location.</span>
+            </div>
+
+            <div id="quickDestinations" class="quick-dests"></div>
+          </div>
+
+          <div class="map-wrap">
+            <div style="position:relative">
+              <div id="routeMap"></div>
+              <div class="map-legend">
+                <strong>Map Legend</strong>
+                <div class="legend-row"><span class="line" style="background:#16a34a"></span> Safest Route</div>
+                <div class="legend-row"><span class="line" style="background:#2563eb"></span> Alternative Route</div>
+                <div class="legend-row"><span class="marker" style="background:#2563eb"></span> Low Risk</div>
+                <div class="legend-row"><span class="marker" style="background:#f59e0b"></span> Medium Risk</div>
+                <div class="legend-row"><span class="marker" style="background:#dc2626"></span> High Risk</div>
+              </div>
+            </div>
+            <div class="map-note">
+              Hover a route to highlight it. Click a route line or route card to inspect its safety parameters.
+            </div>
+          </div>
+
+          <div id="routeResults" class="results">
+            <div class="empty">Allow location and select a destination to compare routes.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="container">
+        <div class="section-head">
+          <small>Contact</small>
+          <h2>Guardian AI is built around your safety.</h2>
+          <p>Three modules can work together: Safe Route, GPS Guardian and Bluetooth Safety.</p>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>🛡️ Platform Status</h3>
+            <div class="status-box">Guardian AI route engine is connected to OSRM and your local safety data.</div>
+          </div>
+          <div class="info-card">
+            <h3>🚨 Emergency</h3>
+            <p>
+              The Emergency button is reserved for the GPS Guardian/Bluetooth
+              emergency workflow that you will connect next.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <button class="emergency" onclick="window.location.href='https://sms-send-kae4.onrender.com/'">
+    🚨 Emergency
+  </button>
 
 
-<!-- ============================================================
+  <!-- ============================================================
      BLUETOOTH SAFETY MODAL
 ============================================================ -->
-<div id="bluetoothModal" class="bt-modal" aria-hidden="true">
-  <div class="bt-panel" role="dialog" aria-modal="true" aria-labelledby="btModalTitle">
-    <div class="bt-head">
-      <div class="bt-title-wrap">
-        <div class="bt-icon">🔵</div>
-        <div>
-          <h2 id="btModalTitle">Bluetooth Safety</h2>
-          <p>Emergency communication through your safety device</p>
+  <div id="bluetoothModal" class="bt-modal" aria-hidden="true">
+    <div class="bt-panel" role="dialog" aria-modal="true" aria-labelledby="btModalTitle">
+      <div class="bt-head">
+        <div class="bt-title-wrap">
+          <div class="bt-icon">🔵</div>
+          <div>
+            <h2 id="btModalTitle">Bluetooth Safety</h2>
+            <p>Emergency communication through your safety device</p>
+          </div>
         </div>
+        <button class="bt-close" type="button" onclick="closeBluetoothSafety()">×</button>
       </div>
-      <button class="bt-close" type="button" onclick="closeBluetoothSafety()">×</button>
-    </div>
-    <div class="bt-body">
-      <div id="btStatus" class="bt-status">
-        <span class="bt-status-dot"></span>
-        <span id="btStatusText">Ready to connect your safety device.</span>
-      </div>
-
-      <div class="bt-card">
-        <h3>🔗 Safety Device</h3>
-        <p>Connect your nearby Bluetooth safety device.</p>
-        <div id="btDeviceList"></div>
-        <div class="bt-actions">
-          <button id="btScanBtn" class="bt-btn bt-connect" type="button">📡 Connect Safety Device</button>
-          <button id="btDisconnectBtn" class="bt-btn bt-secondary" type="button" disabled>Disconnect</button>
+      <div class="bt-body">
+        <div id="btStatus" class="bt-status">
+          <span class="bt-status-dot"></span>
+          <span id="btStatusText">Ready to connect your safety device.</span>
         </div>
-      </div>
 
-      <div class="bt-card">
-        <h3>📍 Emergency Location</h3>
-        <p>Your current browser GPS location will be used when an emergency SOS is sent.</p>
-        <div id="btLocationText" class="bt-location">Getting your current location...</div>
-        <a id="btMapLink" href="#" target="_blank" rel="noopener" style="display:none">Open current location in Google Maps →</a>
-      </div>
-
-      <div class="bt-card bt-message-box">
-        <h3>💬 Send a Short Message</h3>
-        <p>Send a short message to the connected safety device.</p>
-        <textarea id="btMessageInput" maxlength="20" placeholder="Type your message..."></textarea>
-        <div class="bt-counter">
-          <span id="btMessageCounter">0 / 20 characters</span>
-          <span id="btByteStatus">Bytes: 0 / 20</span>
+        <div class="bt-card">
+          <h3>🔗 Safety Device</h3>
+          <p>Connect your nearby Bluetooth safety device.</p>
+          <div id="btDeviceList"></div>
+          <div class="bt-actions">
+            <button id="btScanBtn" class="bt-btn bt-connect" type="button">📡 Connect Safety Device</button>
+            <button id="btDisconnectBtn" class="bt-btn bt-secondary" type="button" disabled>Disconnect</button>
+          </div>
         </div>
-        <div class="bt-actions">
-          <button id="btSendMessageBtn" class="bt-btn bt-message" type="button" disabled>📨 Send Message</button>
-          <button id="btClearMessageBtn" class="bt-btn bt-secondary" type="button" disabled>Clear</button>
+
+        <div class="bt-card">
+          <h3>📍 Emergency Location</h3>
+          <p>Your current browser GPS location will be used when an emergency SOS is sent.</p>
+          <div id="btLocationText" class="bt-location">Getting your current location...</div>
+          <a id="btMapLink" href="#" target="_blank" rel="noopener" style="display:none">Open current location in Google
+            Maps →</a>
         </div>
-      </div>
 
-      <div class="bt-card">
-        <h3>🚨 Emergency</h3>
-        <p>Send an SOS containing your current GPS location through the connected Bluetooth device.</p>
-        <div class="bt-actions">
-          <button id="btTestBtn" class="bt-btn bt-secondary" type="button" disabled>Test Connection</button>
-          <button id="btSosBtn" class="bt-btn bt-danger" type="button" disabled>🚨 Send Emergency SOS</button>
+        <div class="bt-card bt-message-box">
+          <h3>💬 Send a Short Message</h3>
+          <p>Send a short message to the connected safety device.</p>
+          <textarea id="btMessageInput" maxlength="20" placeholder="Type your message..."></textarea>
+          <div class="bt-counter">
+            <span id="btMessageCounter">0 / 20 characters</span>
+            <span id="btByteStatus">Bytes: 0 / 20</span>
+          </div>
+          <div class="bt-actions">
+            <button id="btSendMessageBtn" class="bt-btn bt-message" type="button" disabled>📨 Send Message</button>
+            <button id="btClearMessageBtn" class="bt-btn bt-secondary" type="button" disabled>Clear</button>
+          </div>
         </div>
+
+        <div class="bt-card">
+          <h3>🚨 Emergency</h3>
+          <p>Send an SOS containing your current GPS location through the connected Bluetooth device.</p>
+          <div class="bt-actions">
+            <button id="btTestBtn" class="bt-btn bt-secondary" type="button" disabled>Test Connection</button>
+            <button id="btSosBtn" class="bt-btn bt-danger" type="button" disabled>🚨 Send Emergency SOS</button>
+          </div>
+        </div>
+
+        <p class="bt-note">Bluetooth communication requires Chrome or Edge with Bluetooth enabled. Location permission
+          is required for GPS emergency coordinates.</p>
       </div>
-
-      <p class="bt-note">Bluetooth communication requires Chrome or Edge with Bluetooth enabled. Location permission is required for GPS emergency coordinates.</p>
-    </div>
-  </div>
-</div>
-
-
-<footer>
-  <div class="container footer-grid">
-    <div>
-      <strong>🛡️ Guardian AI</strong>
-      <p>Personal safety, simplified.</p>
-    </div>
-    <div>
-      <p>Safe Route · GPS Guardian · Bluetooth Safety</p>
-      <p>© 2026 Guardian AI</p>
     </div>
   </div>
-</footer>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        crossorigin=""></script>
 
-<script>
-// ============================================================
-// GUARDIAN AI - MAIN APPLICATION
-// ============================================================
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <strong>🛡️ Guardian AI</strong>
+        <p>Personal safety, simplified.</p>
+      </div>
+      <div>
+        <p>Safe Route · GPS Guardian · Bluetooth Safety</p>
+        <p>© 2026 Guardian AI</p>
+      </div>
+    </div>
+  </footer>
 
-let map;
-let currentLocation = null;
-let destination = null;
-let routeLayers = [];
-let safetyLayers = [];
-let startMarker = null;
-let destinationMarker = null;
-let selectedRouteId = null;
-let destinations = [];
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-const routeColors = ["#16a34a","#2563eb","#7c3aed","#0891b2"];
+  <script>
+    // ============================================================
+    // GUARDIAN AI - MAIN APPLICATION
+    // ============================================================
 
-// ============================================================
-// MAP INITIALIZATION
-// ============================================================
-function initMap(){
-  map = L.map("routeMap").setView([20.9374,77.7796], 13);
+    let map;
+    let currentLocation = null;
+    let destination = null;
+    let routeLayers = [];
+    let safetyLayers = [];
+    let startMarker = null;
+    let destinationMarker = null;
+    let selectedRouteId = null;
+    let destinations = [];
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
-    maxZoom:19,
-    attribution:"© OpenStreetMap contributors"
-  }).addTo(map);
+    const routeColors = ["#16a34a", "#2563eb", "#7c3aed", "#0891b2"];
 
-  loadSafetyPoints();
-  loadDestinations();
-}
+    // ============================================================
+    // MAP INITIALIZATION
+    // ============================================================
+    function initMap() {
+      map = L.map("routeMap").setView([20.9374, 77.7796], 13);
 
-function clearLayers(){
-  routeLayers.forEach(x => map.removeLayer(x));
-  routeLayers = [];
-  safetyLayers.forEach(x => map.removeLayer(x));
-  safetyLayers = [];
-  if(startMarker){map.removeLayer(startMarker);startMarker=null}
-  if(destinationMarker){map.removeLayer(destinationMarker);destinationMarker=null}
-}
-
-function markerIcon(color){
-  return L.divIcon({
-    className:"",
-    html:`<div style="width:13px;height:13px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,.35)"></div>`,
-    iconSize:[13,13],
-    iconAnchor:[6,6]
-  });
-}
-
-// ============================================================
-// LOAD SAFETY POINTS
-// ============================================================
-async function loadSafetyPoints(){
-  try{
-    const res=await fetch("/api/safety-data");
-    const json=await res.json();
-    if(!json.success) return;
-
-    json.data.forEach(p=>{
-      if(p.latitude==null || p.longitude==null) return;
-      const score=Number(p.risk_score ?? 0);
-      const color=score>=65 ? "#dc2626" : score>=40 ? "#f59e0b" : "#2563eb";
-
-      const marker=L.marker([Number(p.latitude),Number(p.longitude)],{
-        icon:markerIcon(color)
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "© OpenStreetMap contributors"
       }).addTo(map);
 
-      marker.bindPopup(`
+      loadSafetyPoints();
+      loadDestinations();
+    }
+
+    function clearLayers() {
+      routeLayers.forEach(x => map.removeLayer(x));
+      routeLayers = [];
+      safetyLayers.forEach(x => map.removeLayer(x));
+      safetyLayers = [];
+      if (startMarker) {map.removeLayer(startMarker); startMarker = null}
+      if (destinationMarker) {map.removeLayer(destinationMarker); destinationMarker = null}
+    }
+
+    function markerIcon(color) {
+      return L.divIcon({
+        className: "",
+        html: `<div style="width:13px;height:13px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,.35)"></div>`,
+        iconSize: [13, 13],
+        iconAnchor: [6, 6]
+      });
+    }
+
+    // ============================================================
+    // LOAD SAFETY POINTS
+    // ============================================================
+    async function loadSafetyPoints() {
+      try {
+        const res = await fetch("/api/safety-data");
+        const json = await res.json();
+        if (!json.success) return;
+
+        json.data.forEach(p => {
+          if (p.latitude == null || p.longitude == null) return;
+          const score = Number(p.risk_score ?? 0);
+          const color = score >= 65 ? "#dc2626" : score >= 40 ? "#f59e0b" : "#2563eb";
+
+          const marker = L.marker([Number(p.latitude), Number(p.longitude)], {
+            icon: markerIcon(color)
+          }).addTo(map);
+
+          marker.bindPopup(`
         <strong>${escapeHtml(p.location_name || p.area_name || "Risk Area")}</strong><br>
         Type: ${escapeHtml(p.place_type || "Safety area")}<br>
         Risk score: ${score.toFixed(1)}/100<br>
@@ -637,381 +1525,410 @@ async function loadSafetyPoints(){
         Police: ${safe(p.police_presence)}
       `);
 
-      safetyLayers.push(marker);
-    });
-  }catch(err){
-    console.error("Safety points error",err);
-  }
-}
-
-// ============================================================
-// LOAD DESTINATIONS
-// ============================================================
-async function loadDestinations(){
-  try{
-    const res=await fetch("/api/destinations");
-    const json=await res.json();
-    destinations=json.data || [];
-
-    const box=document.getElementById("quickDestinations");
-    box.innerHTML="";
-    destinations.forEach(d=>{
-      const b=document.createElement("button");
-      b.className="chip";
-      b.textContent=d.name;
-      b.onclick=()=>{
-        destination={
-          name:d.name,
-          latitude:Number(d.latitude),
-          longitude:Number(d.longitude),
-          type:d.type
-        };
-        document.getElementById("destinationInput").value=d.name;
-        hideSuggestions("destinationSuggestions");
-        // Auto-find routes after selecting a quick destination
-        if(currentLocation) findRoutes();
-      };
-      box.appendChild(b);
-    });
-  }catch(err){
-    console.error("Destination load error",err);
-  }
-}
-
-// ============================================================
-// LOCATION FUNCTIONS// ============================================================
-function setCurrentLocation(lat,lon,label="Current Location"){
-  currentLocation={lat:Number(lat),lon:Number(lon),label};
-
-  document.getElementById("startInput").value=label;
-  document.getElementById("locationStatus").textContent=
-    `📍 Location detected (${currentLocation.lat.toFixed(5)}, ${currentLocation.lon.toFixed(5)})`;
-
-  if(startMarker) map.removeLayer(startMarker);
-
-  startMarker=L.marker([currentLocation.lat,currentLocation.lon]).addTo(map)
-    .bindPopup("<strong>Starting Location</strong><br>"+escapeHtml(label));
-
-  map.setView([currentLocation.lat,currentLocation.lon],14);
-}
-
-function getCurrentLocation(){
-  const status=document.getElementById("locationStatus");
-
-  if(!navigator.geolocation){
-    status.textContent="Geolocation is not supported by this browser.";
-    return;
-  }
-
-  status.textContent="📍 Detecting your current location...";
-
-  navigator.geolocation.getCurrentPosition(
-    async pos=>{
-      const lat=pos.coords.latitude;
-      const lon=pos.coords.longitude;
-
-      let label="Current Location";
-
-      try{
-        const r=await fetch(`/api/current-city?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);
-        const j=await r.json();
-        label=j.city || "Current Location";
-      }catch(e){}
-
-      setCurrentLocation(lat,lon,label);
-    },
-    err=>{
-      let msg="Unable to get location.";
-      if(err.code===1) msg="Location permission was denied. Allow location access in Chrome.";
-      if(err.code===2) msg="Your location could not be determined.";
-      if(err.code===3) msg="Location request timed out.";
-      status.textContent="⚠️ "+msg;
-    },
-    {enableHighAccuracy:true,timeout:15000,maximumAge:0}
-  );
-}
-
-// ============================================================
-// SEARCH FUNCTIONS - FIXED
-// ============================================================
-async function searchLocation(inputId, suggestionsId) {
-  const input = document.getElementById(inputId);
-  const query = input.value.trim();
-  
-  if (query.length < 2) {
-    hideSuggestions(suggestionsId);
-    return;
-  }
-
-  try {
-    // Use the /api/geocode endpoint
-    const res = await fetch(`/api/geocode?text=${encodeURIComponent(query)}`);
-    const json = await res.json();
-    
-    if (json.error) {
-      console.error("Geocode error:", json.error);
-      hideSuggestions(suggestionsId);
-      return;
+          safetyLayers.push(marker);
+        });
+      } catch (err) {
+        console.error("Safety points error", err);
+      }
     }
 
-    const results = json.results || [];
-    const box = document.getElementById(suggestionsId);
-    box.innerHTML = "";
+    // ============================================================
+    // LOAD DESTINATIONS
+    // ============================================================
+    async function loadDestinations() {
+      try {
+        const res = await fetch("/api/destinations");
+        const json = await res.json();
+        destinations = json.data || [];
 
-    if (results.length === 0) {
-      box.style.display = "none";
-      return;
-    }
-
-    results.slice(0, 8).forEach(item => {
-      const div = document.createElement("div");
-      div.className = "suggestion";
-      div.innerHTML = `<strong>${escapeHtml(item.formatted)}</strong><span>${escapeHtml(item.type || "")}</span>`;
-
-      div.onclick = () => {
-        if (inputId === "destinationInput") {
-          destination = {
-            name: item.formatted,
-            latitude: Number(item.lat),
-            longitude: Number(item.lon),
-            type: item.type || "place"
+        const box = document.getElementById("quickDestinations");
+        box.innerHTML = "";
+        destinations.forEach(d => {
+          const b = document.createElement("button");
+          b.className = "chip";
+          b.textContent = d.name;
+          b.onclick = () => {
+            destination = {
+              name: d.name,
+              latitude: Number(d.latitude),
+              longitude: Number(d.longitude),
+              type: d.type
+            };
+            document.getElementById("destinationInput").value = d.name;
+            hideSuggestions("destinationSuggestions");
+            // Auto-find routes after selecting a quick destination
+            if (currentLocation) findRoutes();
           };
-          input.value = item.formatted;
-        } else {
-          // Start location
-          setCurrentLocation(Number(item.lat), Number(item.lon), item.formatted);
-          input.value = item.formatted;
-        }
+          box.appendChild(b);
+        });
+      } catch (err) {
+        console.error("Destination load error", err);
+      }
+    }
+
+    // ============================================================
+    // LOCATION FUNCTIONS// ============================================================
+    function setCurrentLocation(lat, lon, label = "Current Location") {
+      currentLocation = {lat: Number(lat), lon: Number(lon), label};
+
+      document.getElementById("startInput").value = label;
+      document.getElementById("locationStatus").textContent =
+        `📍 Location detected (${currentLocation.lat.toFixed(5)}, ${currentLocation.lon.toFixed(5)})`;
+
+      if (startMarker) map.removeLayer(startMarker);
+
+      startMarker = L.marker([currentLocation.lat, currentLocation.lon]).addTo(map)
+        .bindPopup("<strong>Starting Location</strong><br>" + escapeHtml(label));
+
+      map.setView([currentLocation.lat, currentLocation.lon], 14);
+    }
+
+    function getCurrentLocation() {
+      const status = document.getElementById("locationStatus");
+
+      if (!navigator.geolocation) {
+        status.textContent = "Geolocation is not supported by this browser.";
+        return;
+      }
+
+      status.textContent = "📍 Detecting your current location...";
+
+      navigator.geolocation.getCurrentPosition(
+        async pos => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+
+          let label = "Current Location";
+
+          try {
+            const r = await fetch(`/api/current-city?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);
+            const j = await r.json();
+            label = j.city || "Current Location";
+          } catch (e) { }
+
+          setCurrentLocation(lat, lon, label);
+        },
+        err => {
+          let msg = "Unable to get location.";
+          if (err.code === 1) msg = "Location permission was denied. Allow location access in Chrome.";
+          if (err.code === 2) msg = "Your location could not be determined.";
+          if (err.code === 3) msg = "Location request timed out.";
+          status.textContent = "⚠️ " + msg;
+        },
+        {enableHighAccuracy: true, timeout: 15000, maximumAge: 0}
+      );
+    }
+
+    // ============================================================
+    // SEARCH FUNCTIONS - FIXED
+    // ============================================================
+    async function searchLocation(inputId, suggestionsId) {
+      const input = document.getElementById(inputId);
+      const query = input.value.trim();
+      const box = document.getElementById(suggestionsId);
+      const buttonId = inputId === "startInput" ? "searchStartBtn" : "searchDestinationBtn";
+      const button = document.getElementById(buttonId);
+
+      if (query.length < 2) {
         hideSuggestions(suggestionsId);
-        // Auto-find routes if both locations are set
-        if (currentLocation && destination) {
-          findRoutes();
+        if (inputId === "startInput") {
+          document.getElementById("locationStatus").textContent =
+            "Enter at least 2 characters, then tap Search.";
         }
-      };
+        return;
+      }
 
-      box.appendChild(div);
-    });
+      button.disabled = true;
+      const oldLabel = button.textContent;
+      button.textContent = "Searching…";
+      if (inputId === "startInput") {
+        document.getElementById("locationStatus").textContent =
+          "Searching for the starting location…";
+      }
 
-    box.style.display = "block";
-  } catch (err) {
-    console.error("Search error:", err);
-    hideSuggestions(suggestionsId);
-  }
-}
+      try {
+        const res = await fetch(`/api/geocode?text=${encodeURIComponent(query)}`);
+        const json = await res.json();
 
-function hideSuggestions(id){
-  const el = document.getElementById(id);
-  if (el) el.style.display = "none";
-}
+        if (!res.ok || json.error) {
+          const message = json.error || `Location search failed (HTTP ${res.status}).`;
+          box.innerHTML = `<div class="suggestion">${escapeHtml(message)}</div>`;
+          box.style.display = "block";
+          if (inputId === "startInput") {
+            document.getElementById("locationStatus").textContent = "⚠️ " + message;
+          }
+          return;
+        }
 
-// ============================================================
-// FIND ROUTES - FIXED
-// ============================================================
-async function resolveManualStartLocation(){
-  const input = document.getElementById("startInput");
-  const query = input.value.trim();
+        const results = json.results || [];
+        box.innerHTML = "";
 
-  // If the input still matches the selected GPS/manual location, keep its coordinates.
-  if (currentLocation && query && query === currentLocation.label) {
-    return true;
-  }
+        if (results.length === 0) {
+          box.innerHTML = '<div class="suggestion">No locations found. Try a more specific place name.</div>';
+          box.style.display = "block";
+          if (inputId === "startInput") {
+            document.getElementById("locationStatus").textContent =
+              "No matching starting location found. Try a more specific name.";
+          }
+          return;
+        }
 
-  if (!query) return false;
+        results.slice(0, 8).forEach(item => {
+          const div = document.createElement("div");
+          div.className = "suggestion";
+          div.innerHTML = `<strong>${escapeHtml(item.formatted)}</strong><span>${escapeHtml(item.type || "")}</span>`;
 
-  const status = document.getElementById("locationStatus");
-  status.textContent = "📍 Finding the starting location you entered...";
+          div.onclick = () => {
+            if (inputId === "destinationInput") {
+              destination = {
+                name: item.formatted,
+                latitude: Number(item.lat),
+                longitude: Number(item.lon),
+                type: item.type || "place"
+              };
+              input.value = item.formatted;
+            } else {
+              setCurrentLocation(Number(item.lat), Number(item.lon), item.formatted);
+              input.value = item.formatted;
+            }
+            hideSuggestions(suggestionsId);
+            if (inputId === "startInput") {
+              document.getElementById("locationStatus").textContent =
+                "Starting location selected: " + item.formatted;
+            }
+            if (currentLocation && destination) findRoutes();
+          };
 
-  try {
-    const res = await fetch(`/api/geocode?text=${encodeURIComponent(query)}`);
-    const json = await res.json();
-    const results = json.results || [];
-
-    if (!res.ok || json.error || results.length === 0) {
-      status.textContent = "⚠️ Starting location not found. Choose a suggestion or enter a more specific place.";
-      return false;
+          box.appendChild(div);
+        });
+        box.style.display = "block";
+      } catch (err) {
+        console.error("Search error:", err);
+        box.innerHTML = '<div class="suggestion">Could not search locations. Check your connection and try again.</div>';
+        box.style.display = "block";
+        if (inputId === "startInput") {
+          document.getElementById("locationStatus").textContent =
+            "⚠️ Could not search locations. Check your connection and try again.";
+        }
+      } finally {
+        button.disabled = false;
+        button.textContent = oldLabel;
+      }
     }
 
-    // Use the first geocoding match for the typed start address.
-    const item = results[0];
-    const lat = Number(item.lat);
-    const lon = Number(item.lon);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-      status.textContent = "⚠️ The starting location returned invalid coordinates.";
-      return false;
+    function hideSuggestions(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
     }
 
-    setCurrentLocation(lat, lon, item.formatted || query);
-    return true;
-  } catch (err) {
-    console.error("Starting location lookup error:", err);
-    status.textContent = "⚠️ Could not look up the starting location. Check your connection and try again.";
-    return false;
-  }
-}
+    // ============================================================
+    // FIND ROUTES - FIXED
+    // ============================================================
+    async function resolveManualStartLocation() {
+      const input = document.getElementById("startInput");
+      const query = input.value.trim();
 
-async function findRoutes(){
-  // Prefer the manually entered/selected starting point. GPS is only used when
-  // the user taps “Use Current Location” or the field contains that GPS label.
-  const startReady = await resolveManualStartLocation();
-  if(!startReady){
-    alert("Enter a starting location and choose a suggestion, or tap Use Current Location.");
-    document.getElementById("startInput").focus();
-    return;
-  }
+      // If the input still matches the selected GPS/manual location, keep its coordinates.
+      if (currentLocation && query && query === currentLocation.label) {
+        return true;
+      }
 
-  if(!destination){
-    alert("Please select a destination from the suggestions or quick destinations.");
-    document.getElementById("destinationInput").focus();
-    return;
-  }
+      if (!query) return false;
 
-  const results=document.getElementById("routeResults");
-  const findButton=document.getElementById("findRoutesBtn");
-  results.innerHTML='<div class="loading"><span class="loading-spinner"></span>Finding and comparing safer routes...</div>';
-  findButton.disabled=true;
-  findButton.textContent="Finding Safe Routes...";
+      const status = document.getElementById("locationStatus");
+      status.textContent = "📍 Finding the starting location you entered...";
 
-  clearRouteOnly();
+      try {
+        const res = await fetch(`/api/geocode?text=${encodeURIComponent(query)}`);
+        const json = await res.json();
+        const results = json.results || [];
 
-  try{
-    const url=new URL("/api/routes", window.location.origin);
-    url.searchParams.set("start_lat", currentLocation.lat);
-    url.searchParams.set("start_lon", currentLocation.lon);
-    url.searchParams.set("end_lat", destination.latitude);
-    url.searchParams.set("end_lon", destination.longitude);
+        if (!res.ok || json.error || results.length === 0) {
+          status.textContent = "⚠️ Starting location not found. Choose a suggestion or enter a more specific place.";
+          return false;
+        }
 
-    const res=await fetch(url);
-    const json=await res.json();
+        // Use the first geocoding match for the typed start address.
+        const item = results[0];
+        const lat = Number(item.lat);
+        const lon = Number(item.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+          status.textContent = "⚠️ The starting location returned invalid coordinates.";
+          return false;
+        }
 
-    if(!res.ok || json.error){
-      throw new Error(json.error || "No route found");
+        setCurrentLocation(lat, lon, item.formatted || query);
+        return true;
+      } catch (err) {
+        console.error("Starting location lookup error:", err);
+        status.textContent = "⚠️ Could not look up the starting location. Check your connection and try again.";
+        return false;
+      }
     }
 
-    const routes = json.routes || [];
-    if (routes.length === 0) {
-      throw new Error("No routes found between these locations.");
+    async function findRoutes() {
+      // Prefer the manually entered/selected starting point. GPS is only used when
+      // the user taps “Use Current Location” or the field contains that GPS label.
+      const startReady = await resolveManualStartLocation();
+      if (!startReady) {
+        alert("Enter a starting location and choose a suggestion, or tap Use Current Location.");
+        document.getElementById("startInput").focus();
+        return;
+      }
+
+      if (!destination) {
+        alert("Please select a destination from the suggestions or quick destinations.");
+        document.getElementById("destinationInput").focus();
+        return;
+      }
+
+      const results = document.getElementById("routeResults");
+      const findButton = document.getElementById("findRoutesBtn");
+      results.innerHTML = '<div class="loading"><span class="loading-spinner"></span>Finding and comparing safer routes...</div>';
+      findButton.disabled = true;
+      findButton.textContent = "Finding Safe Routes...";
+
+      clearRouteOnly();
+
+      try {
+        const url = new URL("/api/routes", window.location.origin);
+        url.searchParams.set("start_lat", currentLocation.lat);
+        url.searchParams.set("start_lon", currentLocation.lon);
+        url.searchParams.set("end_lat", destination.latitude);
+        url.searchParams.set("end_lon", destination.longitude);
+
+        const res = await fetch(url);
+        const json = await res.json();
+
+        if (!res.ok || json.error) {
+          throw new Error(json.error || "No route found");
+        }
+
+        const routes = json.routes || [];
+        if (routes.length === 0) {
+          throw new Error("No routes found between these locations.");
+        }
+
+        renderRoutes(routes, json.safest_route_id);
+      } catch (err) {
+        console.error(err);
+        results.innerHTML = `<div class="empty">❌ ${escapeHtml(err.message || "Unable to calculate route.")}</div>`;
+      } finally {
+        findButton.disabled = false;
+        findButton.textContent = "Find Safe Route";
+      }
     }
 
-    renderRoutes(routes, json.safest_route_id);
-  }catch(err){
-    console.error(err);
-    results.innerHTML=`<div class="empty">❌ ${escapeHtml(err.message || "Unable to calculate route.")}</div>`;
-  }finally{
-    findButton.disabled=false;
-    findButton.textContent="Find Safe Route";
-  }
-}
+    function clearRouteOnly() {
+      routeLayers.forEach(x => map.removeLayer(x));
+      routeLayers = [];
+      if (destinationMarker) {map.removeLayer(destinationMarker); destinationMarker = null}
+    }
 
-function clearRouteOnly(){
-  routeLayers.forEach(x=>map.removeLayer(x));
-  routeLayers=[];
-  if(destinationMarker){map.removeLayer(destinationMarker);destinationMarker=null}
-}
+    // ============================================================
+    // RENDER ROUTES
+    // ============================================================
+    function renderRoutes(routes, safestId) {
+      const bounds = [];
+      const results = document.getElementById("routeResults");
 
-// ============================================================
-// RENDER ROUTES
-// ============================================================
-function renderRoutes(routes, safestId){
-  const bounds=[];
-  const results=document.getElementById("routeResults");
+      // Find the safest route ID if not provided
+      if (!safestId && routes.length > 0) {
+        const sorted = [...routes].sort((a, b) => (b.safety_score || 0) - (a.safety_score || 0));
+        safestId = sorted[0]?.id;
+      }
 
-  // Find the safest route ID if not provided
-  if (!safestId && routes.length > 0) {
-    const sorted = [...routes].sort((a,b) => (b.safety_score || 0) - (a.safety_score || 0));
-    safestId = sorted[0]?.id;
-  }
+      routes.forEach((route, index) => {
+        const coords = (route.geometry?.coordinates || []).map(c => [c[1], c[0]]);
+        if (!coords.length) return;
 
-  routes.forEach((route, index)=>{
-    const coords=(route.geometry?.coordinates || []).map(c=>[c[1],c[0]]);
-    if(!coords.length)return;
+        const isBest = route.id === safestId || route.recommended;
+        const color = isBest ? "#16a34a" : routeColors[index % routeColors.length];
 
-    const isBest=route.id === safestId || route.recommended;
-    const color=isBest ? "#16a34a" : routeColors[index % routeColors.length];
+        const line = L.polyline(coords, {
+          color,
+          weight: isBest ? 7 : 4,
+          opacity: isBest ? .92 : .68
+        }).addTo(map);
 
-    const line=L.polyline(coords,{
-      color,
-      weight:isBest ? 7 : 4,
-      opacity:isBest ? .92 : .68
-    }).addTo(map);
+        line.on("mouseover", () => line.setStyle({weight: isBest ? 9 : 7, opacity: 1}));
+        line.on("mouseout", () => line.setStyle({weight: isBest ? 7 : 4, opacity: isBest ? .92 : .68}));
+        line.on("click", () => selectRouteCard(route.id));
 
-    line.on("mouseover",()=>line.setStyle({weight:isBest?9:7,opacity:1}));
-    line.on("mouseout",()=>line.setStyle({weight:isBest?7:4,opacity:isBest?.92:.68}));
-    line.on("click",()=>selectRouteCard(route.id));
+        const finalRisk = route.final_risk_score;
+        const safety = finalRisk == null ? null : Math.max(0, 100 - finalRisk);
+        const level = route.final_risk_level || "Insufficient Data";
 
-    const finalRisk=route.final_risk_score;
-    const safety=finalRisk==null ? null : Math.max(0,100-finalRisk);
-    const level=route.final_risk_level || "Insufficient Data";
-
-    line.bindTooltip(`
-      <strong>${isBest?"🛡️ Safest Route":"🛣️ Route "+route.id}</strong><br>
-      Safety: ${safety==null?"Insufficient data":safety.toFixed(1)+"/100"}<br>
-      Distance: ${(route.distance/1000).toFixed(2)} km<br>
-      Time: ${(route.duration/60).toFixed(1)} min<br>
-      Risk: ${finalRisk==null?"—":finalRisk.toFixed(1)+"/100"}<br>
+        line.bindTooltip(`
+      <strong>${isBest ? "🛡️ Safest Route" : "🛣️ Route " + route.id}</strong><br>
+      Safety: ${safety == null ? "Insufficient data" : safety.toFixed(1) + "/100"}<br>
+      Distance: ${(route.distance / 1000).toFixed(2)} km<br>
+      Time: ${(route.duration / 60).toFixed(1)} min<br>
+      Risk: ${finalRisk == null ? "—" : finalRisk.toFixed(1) + "/100"}<br>
       Level: ${level}
     `);
 
-    routeLayers.push(line);
-    coords.forEach(c=>bounds.push(c));
-  });
+        routeLayers.push(line);
+        coords.forEach(c => bounds.push(c));
+      });
 
-  if(currentLocation){
-    if(startMarker)map.removeLayer(startMarker);
-    startMarker=L.marker([currentLocation.lat,currentLocation.lon]).addTo(map)
-      .bindPopup("<strong>Start</strong><br>"+escapeHtml(currentLocation.label || "Current Location"));
-  }
+      if (currentLocation) {
+        if (startMarker) map.removeLayer(startMarker);
+        startMarker = L.marker([currentLocation.lat, currentLocation.lon]).addTo(map)
+          .bindPopup("<strong>Start</strong><br>" + escapeHtml(currentLocation.label || "Current Location"));
+      }
 
-  if(destination){
-    destinationMarker=L.marker([destination.latitude,destination.longitude]).addTo(map)
-      .bindPopup("<strong>Destination</strong><br>"+escapeHtml(destination.name));
-  }
+      if (destination) {
+        destinationMarker = L.marker([destination.latitude, destination.longitude]).addTo(map)
+          .bindPopup("<strong>Destination</strong><br>" + escapeHtml(destination.name));
+      }
 
-  if(bounds.length) map.fitBounds(bounds,{padding:[35,35]});
+      if (bounds.length) map.fitBounds(bounds, {padding: [35, 35]});
 
-  // Sort routes by safety score
-  const sorted=[...routes].sort((a,b)=>{
-    const ar=a.final_risk_score ?? 999;
-    const br=b.final_risk_score ?? 999;
-    return ar-br;
-  });
+      // Sort routes by safety score
+      const sorted = [...routes].sort((a, b) => {
+        const ar = a.final_risk_score ?? 999;
+        const br = b.final_risk_score ?? 999;
+        return ar - br;
+      });
 
-  results.innerHTML=`
+      results.innerHTML = `
     <div class="results-head">
       <h3>Route Comparison</h3>
-      <span class="muted">${routes.length} route${routes.length>1?"s":""} found</span>
+      <span class="muted">${routes.length} route${routes.length > 1 ? "s" : ""} found</span>
     </div>
   `;
 
-  sorted.forEach((route)=>{
-    results.appendChild(createRouteCard(route, route.id === safestId || route.recommended));
-  });
-}
+      sorted.forEach((route) => {
+        results.appendChild(createRouteCard(route, route.id === safestId || route.recommended));
+      });
+    }
 
-// ============================================================
-// CREATE ROUTE CARD
-// ============================================================
-function createRouteCard(route, isBest){
-  const card=document.createElement("div");
-  card.className="route-card"+(isBest?" best":"");
-  card.dataset.id=route.id;
+    // ============================================================
+    // CREATE ROUTE CARD
+    // ============================================================
+    function createRouteCard(route, isBest) {
+      const card = document.createElement("div");
+      card.className = "route-card" + (isBest ? " best" : "");
+      card.dataset.id = route.id;
 
-  const risk=route.final_risk_score;
-  const safety=risk==null?null:Math.max(0,100-risk);
-  const level=route.final_risk_level || "Insufficient Data";
-  
-  let badgeClass = "risk-low";
-  if (level === "High Risk" || level === "Risky") badgeClass = "risk-high";
-  else if (level === "Moderate" || level === "Medium") badgeClass = "risk-med";
-  else if (level === "Very Safe") badgeClass = "risk-very-safe";
+      const risk = route.final_risk_score;
+      const safety = risk == null ? null : Math.max(0, 100 - risk);
+      const level = route.final_risk_level || "Insufficient Data";
 
-  const riskPoints = route.risk_points || [];
-  const s = route.safety || {};
+      let badgeClass = "risk-low";
+      if (level === "High Risk" || level === "Risky") badgeClass = "risk-high";
+      else if (level === "Moderate" || level === "Medium") badgeClass = "risk-med";
+      else if (level === "Very Safe") badgeClass = "risk-very-safe";
 
-  card.innerHTML=`
+      const riskPoints = route.risk_points || [];
+      const s = route.safety || {};
+
+      card.innerHTML = `
     <div class="route-card-head">
-      <div class="route-name">${isBest?"🛡️ Safest Route":"🛣️ Route "+route.id}</div>
+      <div class="route-name">${isBest ? "🛡️ Safest Route" : "🛣️ Route " + route.id}</div>
       <div>
-        ${isBest?'<span class="badge best-badge">RECOMMENDED</span>':""}
+        ${isBest ? '<span class="badge best-badge">RECOMMENDED</span>' : ""}
         <span class="badge ${badgeClass}">${escapeHtml(level)}</span>
       </div>
     </div>
@@ -1024,10 +1941,10 @@ function createRouteCard(route, isBest){
     </button>
 
     <div class="route-main">
-      <div class="metric"><span>Safety Score</span><strong>${safety==null?"—":safety.toFixed(1)+"/100"}</strong></div>
-      <div class="metric"><span>Distance</span><strong>${(route.distance/1000).toFixed(2)} km</strong></div>
-      <div class="metric"><span>Estimated Time</span><strong>${(route.duration/60).toFixed(1)} min</strong></div>
-      <div class="metric"><span>Risk Score</span><strong>${risk==null?"—":risk.toFixed(1)+"/100"}</strong></div>
+      <div class="metric"><span>Safety Score</span><strong>${safety == null ? "—" : safety.toFixed(1) + "/100"}</strong></div>
+      <div class="metric"><span>Distance</span><strong>${(route.distance / 1000).toFixed(2)} km</strong></div>
+      <div class="metric"><span>Estimated Time</span><strong>${(route.duration / 60).toFixed(1)} min</strong></div>
+      <div class="metric"><span>Risk Score</span><strong>${risk == null ? "—" : risk.toFixed(1) + "/100"}</strong></div>
     </div>
 
     <div class="route-details">
@@ -1039,200 +1956,196 @@ function createRouteCard(route, isBest){
         <div class="detail"><b>👥 Crowd Density</b>${safe(s.crowd_density)}</div>
         <div class="detail"><b>💡 Lighting Level</b>${safe(s.lighting_level)}</div>
         <div class="detail"><b>🚗 Traffic Level</b>${safe(s.traffic_level)}</div>
-        <div class="detail"><b>🤖 ML Risk</b>${route.ml_risk_score==null?"—":route.ml_risk_score.toFixed(1)+"/100"}</div>
+        <div class="detail"><b>🤖 ML Risk</b>${route.ml_risk_score == null ? "—" : route.ml_risk_score.toFixed(1) + "/100"}</div>
         <div class="detail"><b>🧠 Risk Source</b>${escapeHtml(route.risk_source || "Guardian AI")}</div>
       </div>
 
     </div>
   `;
 
-  card.addEventListener("click",()=>selectRouteCard(route.id));
-  return card;
-}
-
-function selectRouteCard(id){
-  selectedRouteId=id;
-
-  document.querySelectorAll(".route-card").forEach(c=>{
-    c.classList.toggle("selected",Number(c.dataset.id)===id);
-  });
-
-  routeLayers.forEach((line,index)=>{
-    const routeId=index+1;
-    const isSelected=routeId===id;
-    const isBest=line.options.color==="#16a34a";
-    line.setStyle({
-      weight:isSelected?(isBest?9:7):(isBest?7:4),
-      opacity:isSelected?1:(isBest?.92:.68)
-    });
-    if(isSelected) line.openTooltip();
-  });
-}
-
-// ============================================================
-// ROUTE DIRECTIONS
-// ============================================================
-function openRouteDirections(){
-  if(!currentLocation){
-    alert("Please allow your current location first.");
-    getCurrentLocation();
-    return;
-  }
-
-  if(!destination){
-    alert("Please select a destination first.");
-    document.getElementById("destinationInput").focus();
-    return;
-  }
-
-  const origin = `${currentLocation.lat},${currentLocation.lon}`;
-  const destinationPoint = `${destination.latitude},${destination.longitude}`;
-
-  const directionsUrl =
-    `https://www.google.com/maps/dir/?api=1` +
-    `&origin=${encodeURIComponent(origin)}` +
-    `&destination=${encodeURIComponent(destinationPoint)}` +
-    `&travelmode=driving`;
-
-  window.open(directionsUrl, "_blank", "noopener,noreferrer");
-}
-
-// ============================================================
-// HELPER FUNCTIONS
-// ============================================================
-function safe(v){
-  return v==null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(1);
-}
-
-function escapeHtml(value){
-  return String(value ?? "").replace(/[&<>"']/g,c=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-  }[c]));
-}
-
-// ============================================================
-// EVENT LISTENERS
-// ============================================================
-document.getElementById("currentLocationBtn").addEventListener("click", getCurrentLocation);
-document.getElementById("findRoutesBtn").addEventListener("click", findRoutes);
-
-// Input event listeners for search
-document.getElementById("destinationInput").addEventListener("input", function() {
-  searchLocation("destinationInput", "destinationSuggestions");
-});
-
-document.getElementById("startInput").addEventListener("input", function() {
-  // Invalidate the previous origin as soon as the user edits the field, so
-  // routes cannot silently continue using an old GPS/manual coordinate.
-  currentLocation = null;
-  if (startMarker) {
-    map.removeLayer(startMarker);
-    startMarker = null;
-  }
-  document.getElementById("locationStatus").textContent =
-    "Type a starting location, select a suggestion, or use your current location.";
-  searchLocation("startInput", "startSuggestions");
-});
-
-// Enter key support
-document.getElementById("destinationInput").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    const suggestions = document.getElementById("destinationSuggestions");
-    const firstSuggestion = suggestions.querySelector(".suggestion");
-    if (firstSuggestion) {
-      firstSuggestion.click();
-    } else if (destination) {
-      findRoutes();
+      card.addEventListener("click", () => selectRouteCard(route.id));
+      return card;
     }
-  }
-});
 
-document.getElementById("startInput").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    const suggestions = document.getElementById("startSuggestions");
-    const firstSuggestion = suggestions.querySelector(".suggestion");
-    if (firstSuggestion) {
-      firstSuggestion.click();
+    function selectRouteCard(id) {
+      selectedRouteId = id;
+
+      document.querySelectorAll(".route-card").forEach(c => {
+        c.classList.toggle("selected", Number(c.dataset.id) === id);
+      });
+
+      routeLayers.forEach((line, index) => {
+        const routeId = index + 1;
+        const isSelected = routeId === id;
+        const isBest = line.options.color === "#16a34a";
+        line.setStyle({
+          weight: isSelected ? (isBest ? 9 : 7) : (isBest ? 7 : 4),
+          opacity: isSelected ? 1 : (isBest ? .92 : .68)
+        });
+        if (isSelected) line.openTooltip();
+      });
     }
-  }
-});
 
-// Click outside to close suggestions
-document.addEventListener("click", function(e) {
-  if (!e.target.closest(".field")) {
-    hideSuggestions("startSuggestions");
-    hideSuggestions("destinationSuggestions");
-  }
-});
+    // ============================================================
+    // ROUTE DIRECTIONS
+    // ============================================================
+    function openRouteDirections() {
+      if (!currentLocation) {
+        alert("Please allow your current location first.");
+        getCurrentLocation();
+        return;
+      }
 
-// ============================================================
-// BLUETOOTH SAFETY - INTEGRATED
-// ============================================================
-let btDevice = null;
-let btServer = null;
-let btService = null;
-let btSosChar = null;
-let btAckChar = null;
-let btConnected = false;
-let btSending = false;
+      if (!destination) {
+        alert("Please select a destination first.");
+        document.getElementById("destinationInput").focus();
+        return;
+      }
 
-const BT_SERVICE_UUID = "0000bafe-0000-1000-8000-00805f9b34fb";
-const BT_SOS_UUID = "0000b0a1-0000-1000-8000-00805f9b34fb";
-const BT_ACK_UUID = "0000b0a2-0000-1000-8000-00805f9b34fb";
-const BT_CHUNK_SIZE = 20;
-const BT_MAX_RETRIES = 3;
+      const origin = `${currentLocation.lat},${currentLocation.lon}`;
+      const destinationPoint = `${destination.latitude},${destination.longitude}`;
 
-function btSetStatus(message, type = "info") {
-  const statusEl = document.getElementById("btStatus");
-  const textEl = document.getElementById("btStatusText");
-  statusEl.className = `bt-status ${type}`;
-  textEl.textContent = message;
-}
+      const directionsUrl =
+        `https://www.google.com/maps/dir/?api=1` +
+        `&origin=${encodeURIComponent(origin)}` +
+        `&destination=${encodeURIComponent(destinationPoint)}` +
+        `&travelmode=driving`;
 
-function btLog(message, color = "#ddd") {
-  console.log(`[BT] ${message}`);
-}
+      window.open(directionsUrl, "_blank", "noopener,noreferrer");
+    }
 
-function btUpdateButtons() {
-  const connected = btConnected && btDevice && btDevice.gatt && btDevice.gatt.connected && btSosChar;
-  document.getElementById("btScanBtn").disabled = false;
-  document.getElementById("btDisconnectBtn").disabled = !connected;
-  document.getElementById("btTestBtn").disabled = !connected || btSending;
-  document.getElementById("btSosBtn").disabled = !connected || btSending;
-  document.getElementById("btSendMessageBtn").disabled = !connected || btSending;
-  document.getElementById("btClearMessageBtn").disabled = !connected || btSending;
-  document.getElementById("btMessageInput").disabled = !connected || btSending;
-}
+    // ============================================================
+    // HELPER FUNCTIONS
+    // ============================================================
+    function safe(v) {
+      return v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(1);
+    }
 
-function btSleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+      }[c]));
+    }
 
-// Bluetooth Scan
-document.getElementById("btScanBtn").addEventListener("click", async function() {
-  if (!navigator.bluetooth) {
-    btSetStatus("❌ Web Bluetooth is not supported. Use Chrome or Edge.", "error");
-    return;
-  }
+    // ============================================================
+    // EVENT LISTENERS
+    // ============================================================
+    document.getElementById("currentLocationBtn").addEventListener("click", getCurrentLocation);
+    document.getElementById("findRoutesBtn").addEventListener("click", findRoutes);
 
-  this.disabled = true;
-  this.textContent = "🔍 Selecting device...";
-  btSetStatus("Select your Bluetooth safety device...", "info");
-
-  try {
-    const device = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: [BT_SERVICE_UUID]
+    // Search is user-triggered rather than firing a geocoding request on every keystroke.
+    document.getElementById("searchDestinationBtn").addEventListener("click", function () {
+      searchLocation("destinationInput", "destinationSuggestions");
     });
 
-    btDevice = device;
-    btLog(`✅ Found device: ${device.name || "Unknown"}`);
+    document.getElementById("searchStartBtn").addEventListener("click", function () {
+      searchLocation("startInput", "startSuggestions");
+    });
 
-    // Display device
-    const list = document.getElementById("btDeviceList");
-    list.innerHTML = `
+    document.getElementById("destinationInput").addEventListener("input", function () {
+      destination = null;
+      hideSuggestions("destinationSuggestions");
+    });
+
+    document.getElementById("startInput").addEventListener("input", function () {
+      currentLocation = null;
+      if (startMarker) {
+        map.removeLayer(startMarker);
+        startMarker = null;
+      }
+      document.getElementById("locationStatus").textContent =
+        "Enter a starting location and tap Search, or use your current location.";
+      hideSuggestions("startSuggestions");
+    });
+
+    document.getElementById("destinationInput").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        searchLocation("destinationInput", "destinationSuggestions");
+      }
+    });
+
+    document.getElementById("startInput").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        searchLocation("startInput", "startSuggestions");
+      }
+    });
+
+    // Click outside to close suggestions
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest(".field")) {
+        hideSuggestions("startSuggestions");
+        hideSuggestions("destinationSuggestions");
+      }
+    });
+
+    // ============================================================
+    // BLUETOOTH SAFETY - INTEGRATED
+    // ============================================================
+    let btDevice = null;
+    let btServer = null;
+    let btService = null;
+    let btSosChar = null;
+    let btAckChar = null;
+    let btConnected = false;
+    let btSending = false;
+
+    const BT_SERVICE_UUID = "0000bafe-0000-1000-8000-00805f9b34fb";
+    const BT_SOS_UUID = "0000b0a1-0000-1000-8000-00805f9b34fb";
+    const BT_ACK_UUID = "0000b0a2-0000-1000-8000-00805f9b34fb";
+    const BT_CHUNK_SIZE = 20;
+    const BT_MAX_RETRIES = 3;
+
+    function btSetStatus(message, type = "info") {
+      const statusEl = document.getElementById("btStatus");
+      const textEl = document.getElementById("btStatusText");
+      statusEl.className = `bt-status ${type}`;
+      textEl.textContent = message;
+    }
+
+    function btLog(message, color = "#ddd") {
+      console.log(`[BT] ${message}`);
+    }
+
+    function btUpdateButtons() {
+      const connected = btConnected && btDevice && btDevice.gatt && btDevice.gatt.connected && btSosChar;
+      document.getElementById("btScanBtn").disabled = false;
+      document.getElementById("btDisconnectBtn").disabled = !connected;
+      document.getElementById("btTestBtn").disabled = !connected || btSending;
+      document.getElementById("btSosBtn").disabled = !connected || btSending;
+      document.getElementById("btSendMessageBtn").disabled = !connected || btSending;
+      document.getElementById("btClearMessageBtn").disabled = !connected || btSending;
+      document.getElementById("btMessageInput").disabled = !connected || btSending;
+    }
+
+    function btSleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Bluetooth Scan
+    document.getElementById("btScanBtn").addEventListener("click", async function () {
+      if (!navigator.bluetooth) {
+        btSetStatus("❌ Web Bluetooth is not supported. Use Chrome or Edge.", "error");
+        return;
+      }
+
+      this.disabled = true;
+      this.textContent = "🔍 Selecting device...";
+      btSetStatus("Select your Bluetooth safety device...", "info");
+
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [BT_SERVICE_UUID]
+        });
+
+        btDevice = device;
+        btLog(`✅ Found device: ${device.name || "Unknown"}`);
+
+        // Display device
+        const list = document.getElementById("btDeviceList");
+        list.innerHTML = `
       <div class="bt-device">
         <div>
           <strong>📱 ${escapeHtml(device.name || "Unknown BLE Device")}</strong>
@@ -1242,367 +2155,368 @@ document.getElementById("btScanBtn").addEventListener("click", async function() 
       </div>
     `;
 
-    // Connect
-    await btConnectDevice();
+        // Connect
+        await btConnectDevice();
 
-  } catch (error) {
-    if (error.name === "NotFoundError" || String(error.message).includes("cancel")) {
-      btSetStatus("Bluetooth selection cancelled.", "warning");
-    } else {
-      btSetStatus(`❌ Connection error: ${error.message}`, "error");
-      btLog(`❌ Error: ${error.message}`, "#ef5350");
-    }
-  } finally {
-    this.disabled = false;
-    this.textContent = "📡 Connect Safety Device";
-    btUpdateButtons();
-  }
-});
-
-async function btConnectDevice() {
-  if (!btDevice) throw new Error("No device selected");
-
-  btSetStatus(`🔗 Connecting to ${btDevice.name || "device"}...`, "info");
-
-  try {
-    if (!btDevice.gatt || !btDevice.gatt.connected) {
-      btServer = await btDevice.gatt.connect();
-    } else {
-      btServer = btDevice.gatt;
-    }
-
-    btLog("✅ GATT Connected!", "#81c784");
-    btService = await btServer.getPrimaryService(BT_SERVICE_UUID);
-    btLog(`✅ BAFE service found`, "#81c784");
-
-    // Get characteristics
-    const chars = await btService.getCharacteristics();
-    btSosChar = null;
-    btAckChar = null;
-
-    for (const c of chars) {
-      const uuid = c.uuid.toLowerCase();
-      if (uuid === BT_SOS_UUID) {
-        btSosChar = c;
-        btLog(`✅ Found B0A1 WRITE characteristic`, "#81c784");
+      } catch (error) {
+        if (error.name === "NotFoundError" || String(error.message).includes("cancel")) {
+          btSetStatus("Bluetooth selection cancelled.", "warning");
+        } else {
+          btSetStatus(`❌ Connection error: ${error.message}`, "error");
+          btLog(`❌ Error: ${error.message}`, "#ef5350");
+        }
+      } finally {
+        this.disabled = false;
+        this.textContent = "📡 Connect Safety Device";
+        btUpdateButtons();
       }
-      if (uuid === BT_ACK_UUID) {
-        btAckChar = c;
-        btLog(`✅ Found B0A2 NOTIFY characteristic`, "#81c784");
-      }
-    }
+    });
 
-    if (!btSosChar) {
-      throw new Error("B0A1 WRITE characteristic not found.");
-    }
+    async function btConnectDevice() {
+      if (!btDevice) throw new Error("No device selected");
 
-    // Enable notifications
-    if (btAckChar && (btAckChar.properties.notify || btAckChar.properties.indicate)) {
+      btSetStatus(`🔗 Connecting to ${btDevice.name || "device"}...`, "info");
+
       try {
-        await btAckChar.startNotifications();
-        btAckChar.addEventListener("characteristicvaluechanged", btHandleAck);
-        btLog("✅ B0A2 notifications enabled.", "#81c784");
+        if (!btDevice.gatt || !btDevice.gatt.connected) {
+          btServer = await btDevice.gatt.connect();
+        } else {
+          btServer = btDevice.gatt;
+        }
+
+        btLog("✅ GATT Connected!", "#81c784");
+        btService = await btServer.getPrimaryService(BT_SERVICE_UUID);
+        btLog(`✅ BAFE service found`, "#81c784");
+
+        // Get characteristics
+        const chars = await btService.getCharacteristics();
+        btSosChar = null;
+        btAckChar = null;
+
+        for (const c of chars) {
+          const uuid = c.uuid.toLowerCase();
+          if (uuid === BT_SOS_UUID) {
+            btSosChar = c;
+            btLog(`✅ Found B0A1 WRITE characteristic`, "#81c784");
+          }
+          if (uuid === BT_ACK_UUID) {
+            btAckChar = c;
+            btLog(`✅ Found B0A2 NOTIFY characteristic`, "#81c784");
+          }
+        }
+
+        if (!btSosChar) {
+          throw new Error("B0A1 WRITE characteristic not found.");
+        }
+
+        // Enable notifications
+        if (btAckChar && (btAckChar.properties.notify || btAckChar.properties.indicate)) {
+          try {
+            await btAckChar.startNotifications();
+            btAckChar.addEventListener("characteristicvaluechanged", btHandleAck);
+            btLog("✅ B0A2 notifications enabled.", "#81c784");
+          } catch (e) {
+            btLog(`⚠️ Notification setup failed: ${e.message}`, "#ffb74d");
+          }
+        }
+
+        btConnected = true;
+        btSetStatus(`✅ Connected to ${btDevice.name || "device"} — Ready!`, "success");
+        btLog("✅ SAFE ROUTE BLE READY", "#81c784");
+        btUpdateButtons();
+
+      } catch (error) {
+        btConnected = false;
+        btSetStatus(`❌ Connection failed: ${error.message}`, "error");
+        btLog(`❌ Connection error: ${error.message}`, "#ef5350");
+        throw error;
+      }
+    }
+
+    function btHandleAck(event) {
+      try {
+        const value = event.target.value;
+        const decoded = new TextDecoder().decode(value);
+        btLog(`📥 ACK received: ${decoded}`, "#81c784");
+        btSetStatus("✅ ACK received from device.", "success");
       } catch (e) {
-        btLog(`⚠️ Notification setup failed: ${e.message}`, "#ffb74d");
+        btLog(`⚠️ ACK decode failed: ${e.message}`, "#ffb74d");
       }
     }
 
-    btConnected = true;
-    btSetStatus(`✅ Connected to ${btDevice.name || "device"} — Ready!`, "success");
-    btLog("✅ SAFE ROUTE BLE READY", "#81c784");
-    btUpdateButtons();
-
-  } catch (error) {
-    btConnected = false;
-    btSetStatus(`❌ Connection failed: ${error.message}`, "error");
-    btLog(`❌ Connection error: ${error.message}`, "#ef5350");
-    throw error;
-  }
-}
-
-function btHandleAck(event) {
-  try {
-    const value = event.target.value;
-    const decoded = new TextDecoder().decode(value);
-    btLog(`📥 ACK received: ${decoded}`, "#81c784");
-    btSetStatus("✅ ACK received from device.", "success");
-  } catch (e) {
-    btLog(`⚠️ ACK decode failed: ${e.message}`, "#ffb74d");
-  }
-}
-
-async function btWriteOne(data) {
-  if (!btSosChar) throw new Error("B0A1 not available");
-  if (!btDevice.gatt || !btDevice.gatt.connected) {
-    btConnected = false;
-    btUpdateButtons();
-    throw new Error("BLE device disconnected");
-  }
-
-  const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
-  if (bytes.length > BT_CHUNK_SIZE) {
-    throw new Error(`Packet exceeds ${BT_CHUNK_SIZE} bytes`);
-  }
-
-  let lastError = null;
-  for (let attempt = 1; attempt <= BT_MAX_RETRIES; attempt++) {
-    try {
-      if (btSosChar.properties.writeWithoutResponse && typeof btSosChar.writeValueWithoutResponse === "function") {
-        await btSosChar.writeValueWithoutResponse(bytes);
-      } else if (btSosChar.properties.write && typeof btSosChar.writeValueWithResponse === "function") {
-        await btSosChar.writeValueWithResponse(bytes);
-      } else if (typeof btSosChar.writeValue === "function") {
-        await btSosChar.writeValue(bytes);
-      } else {
-        throw new Error("No supported write method");
+    async function btWriteOne(data) {
+      if (!btSosChar) throw new Error("B0A1 not available");
+      if (!btDevice.gatt || !btDevice.gatt.connected) {
+        btConnected = false;
+        btUpdateButtons();
+        throw new Error("BLE device disconnected");
       }
-      return;
-    } catch (error) {
-      lastError = error;
-      btLog(`⚠️ Write attempt ${attempt}/${BT_MAX_RETRIES} failed: ${error.message}`, "#ffb74d");
-      if (attempt < BT_MAX_RETRIES) await btSleep(300);
+
+      const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+      if (bytes.length > BT_CHUNK_SIZE) {
+        throw new Error(`Packet exceeds ${BT_CHUNK_SIZE} bytes`);
+      }
+
+      let lastError = null;
+      for (let attempt = 1; attempt <= BT_MAX_RETRIES; attempt++) {
+        try {
+          if (btSosChar.properties.writeWithoutResponse && typeof btSosChar.writeValueWithoutResponse === "function") {
+            await btSosChar.writeValueWithoutResponse(bytes);
+          } else if (btSosChar.properties.write && typeof btSosChar.writeValueWithResponse === "function") {
+            await btSosChar.writeValueWithResponse(bytes);
+          } else if (typeof btSosChar.writeValue === "function") {
+            await btSosChar.writeValue(bytes);
+          } else {
+            throw new Error("No supported write method");
+          }
+          return;
+        } catch (error) {
+          lastError = error;
+          btLog(`⚠️ Write attempt ${attempt}/${BT_MAX_RETRIES} failed: ${error.message}`, "#ffb74d");
+          if (attempt < BT_MAX_RETRIES) await btSleep(300);
+        }
+      }
+      throw lastError || new Error("Write failed");
     }
-  }
-  throw lastError || new Error("Write failed");
-}
 
-async function btSendChunks(bytes) {
-  const total = Math.ceil(bytes.length / BT_CHUNK_SIZE);
-  btLog(`📦 Splitting into ${total} packets...`, "#4fc3f7");
+    async function btSendChunks(bytes) {
+      const total = Math.ceil(bytes.length / BT_CHUNK_SIZE);
+      btLog(`📦 Splitting into ${total} packets...`, "#4fc3f7");
 
-  for (let i = 0; i < total; i++) {
-    const start = i * BT_CHUNK_SIZE;
-    const end = Math.min(start + BT_CHUNK_SIZE, bytes.length);
-    const chunk = bytes.slice(start, end);
-    btLog(`📤 Packet ${i+1}/${total}: ${chunk.length} bytes`, "#4fc3f7");
-    await btWriteOne(chunk);
-    if (i < total - 1) await btSleep(120);
-  }
-  btLog(`✅ All ${total} packets sent.`, "#81c784");
-}
-
-// Get current location for SOS
-function btGetLocation() {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) {
-      resolve({ latitude: 20.9374, longitude: 77.7796, speed: 0 });
-      return;
+      for (let i = 0; i < total; i++) {
+        const start = i * BT_CHUNK_SIZE;
+        const end = Math.min(start + BT_CHUNK_SIZE, bytes.length);
+        const chunk = bytes.slice(start, end);
+        btLog(`📤 Packet ${i + 1}/${total}: ${chunk.length} bytes`, "#4fc3f7");
+        await btWriteOne(chunk);
+        if (i < total - 1) await btSleep(120);
+      }
+      btLog(`✅ All ${total} packets sent.`, "#81c784");
     }
-    navigator.geolocation.getCurrentPosition(
-      pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, speed: pos.coords.speed || 0 }),
-      () => resolve({ latitude: 20.9374, longitude: 77.7796, speed: 0 }),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  });
-}
 
-// Send SOS
-document.getElementById("btSosBtn").addEventListener("click", async function() {
-  if (btSending || !btConnected) return;
-
-  btSending = true;
-  btUpdateButtons();
-  btSetStatus("🚨 Preparing SOS...", "info");
-
-  try {
-    const location = await btGetLocation();
-    btLog(`📍 Location: ${location.latitude}, ${location.longitude}`, "#4fc3f7");
-
-    const sosData = {
-      message_id: "SOS-BLE-" + Date.now(),
-      source_device_id: btDevice?.id || "UNKNOWN",
-      latitude: location.latitude,
-      longitude: location.longitude,
-      speed: location.speed || 0,
-      timestamp: Math.floor(Date.now() / 1000),
-      emergency_type: "GENERAL",
-      from: "GuardianAI_Web"
-    };
-
-    const json = JSON.stringify(sosData);
-    const encoded = new TextEncoder().encode(json);
-    btLog(`📦 SOS data: ${encoded.length} bytes`, "#4fc3f7");
-
-    await btSendChunks(encoded);
-
-    // Forward to server
-    try {
-      const res = await fetch("/api/emergency/bluetooth-forward", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sosData)
+    // Get current location for SOS
+    function btGetLocation() {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          resolve({latitude: 20.9374, longitude: 77.7796, speed: 0});
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({latitude: pos.coords.latitude, longitude: pos.coords.longitude, speed: pos.coords.speed || 0}),
+          () => resolve({latitude: 20.9374, longitude: 77.7796, speed: 0}),
+          {enableHighAccuracy: true, timeout: 10000, maximumAge: 0}
+        );
       });
-      const result = await res.json();
-      if (result.success) {
-        btLog("✅ Server acknowledged SOS", "#81c784");
+    }
+
+    // Send SOS
+    document.getElementById("btSosBtn").addEventListener("click", async function () {
+      if (btSending || !btConnected) return;
+
+      btSending = true;
+      btUpdateButtons();
+      btSetStatus("🚨 Preparing SOS...", "info");
+
+      try {
+        const location = await btGetLocation();
+        btLog(`📍 Location: ${location.latitude}, ${location.longitude}`, "#4fc3f7");
+
+        const sosData = {
+          message_id: "SOS-BLE-" + Date.now(),
+          source_device_id: btDevice?.id || "UNKNOWN",
+          latitude: location.latitude,
+          longitude: location.longitude,
+          speed: location.speed || 0,
+          timestamp: Math.floor(Date.now() / 1000),
+          emergency_type: "GENERAL",
+          from: "GuardianAI_Web"
+        };
+
+        const json = JSON.stringify(sosData);
+        const encoded = new TextEncoder().encode(json);
+        btLog(`📦 SOS data: ${encoded.length} bytes`, "#4fc3f7");
+
+        await btSendChunks(encoded);
+
+        // Forward to server
+        try {
+          const res = await fetch("/api/emergency/bluetooth-forward", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(sosData)
+          });
+          const result = await res.json();
+          if (result.success) {
+            btLog("✅ Server acknowledged SOS", "#81c784");
+          }
+        } catch (e) {
+          btLog(`⚠️ Server forward failed: ${e.message}`, "#ffb74d");
+        }
+
+        btSetStatus("✅ SOS sent successfully!", "success");
+        btLog("✅ SOS COMPLETE", "#81c784");
+
+      } catch (error) {
+        btSetStatus(`❌ SOS failed: ${error.message}`, "error");
+        btLog(`❌ SOS error: ${error.message}`, "#ef5350");
+      } finally {
+        btSending = false;
+        btUpdateButtons();
       }
-    } catch (e) {
-      btLog(`⚠️ Server forward failed: ${e.message}`, "#ffb74d");
+    });
+
+    // Test connection
+    document.getElementById("btTestBtn").addEventListener("click", async function () {
+      if (btSending || !btConnected) return;
+
+      btSending = true;
+      btUpdateButtons();
+      btSetStatus("🧪 Testing B0A1 WRITE...", "info");
+
+      try {
+        const data = new TextEncoder().encode("PING");
+        await btWriteOne(data);
+        btSetStatus("✅ B0A1 WRITE test succeeded.", "success");
+        btLog("✅ PING write succeeded!", "#81c784");
+      } catch (error) {
+        btSetStatus(`❌ Test failed: ${error.message}`, "error");
+        btLog(`❌ PING failed: ${error.message}`, "#ef5350");
+      } finally {
+        btSending = false;
+        btUpdateButtons();
+      }
+    });
+
+    // Send message
+    document.getElementById("btSendMessageBtn").addEventListener("click", async function () {
+      if (btSending || !btConnected) return;
+
+      const input = document.getElementById("btMessageInput");
+      const message = input.value.trim();
+      if (!message) {
+        btSetStatus("⚠️ Please type a message.", "warning");
+        return;
+      }
+
+      const encoded = new TextEncoder().encode(message);
+      if (encoded.length > BT_CHUNK_SIZE) {
+        btSetStatus(`❌ Message exceeds ${BT_CHUNK_SIZE} bytes.`, "error");
+        return;
+      }
+
+      btSending = true;
+      btUpdateButtons();
+      btSetStatus("📨 Sending message...", "info");
+
+      try {
+        await btWriteOne(encoded);
+        btSetStatus("✅ Message sent.", "success");
+        btLog(`📨 Message sent: ${message}`, "#ce93d8");
+      } catch (error) {
+        btSetStatus(`❌ Failed: ${error.message}`, "error");
+      } finally {
+        btSending = false;
+        btUpdateButtons();
+      }
+    });
+
+    // Clear message
+    document.getElementById("btClearMessageBtn").addEventListener("click", function () {
+      document.getElementById("btMessageInput").value = "";
+      btUpdateMessageCounter();
+    });
+
+    // Message counter
+    function btUpdateMessageCounter() {
+      const input = document.getElementById("btMessageInput");
+      const text = input.value;
+      const bytes = new TextEncoder().encode(text);
+      document.getElementById("btMessageCounter").textContent = `${text.length} / 20 characters`;
+      document.getElementById("btByteStatus").textContent = `Bytes: ${bytes.length} / 20`;
     }
 
-    btSetStatus("✅ SOS sent successfully!", "success");
-    btLog("✅ SOS COMPLETE", "#81c784");
+    document.getElementById("btMessageInput").addEventListener("input", btUpdateMessageCounter);
 
-  } catch (error) {
-    btSetStatus(`❌ SOS failed: ${error.message}`, "error");
-    btLog(`❌ SOS error: ${error.message}`, "#ef5350");
-  } finally {
-    btSending = false;
-    btUpdateButtons();
-  }
-});
+    // Disconnect
+    document.getElementById("btDisconnectBtn").addEventListener("click", function () {
+      try {
+        if (btDevice && btDevice.gatt && btDevice.gatt.connected) {
+          btDevice.gatt.disconnect();
+        }
+      } catch (e) { }
 
-// Test connection
-document.getElementById("btTestBtn").addEventListener("click", async function() {
-  if (btSending || !btConnected) return;
+      btConnected = false;
+      btServer = null;
+      btService = null;
+      btSosChar = null;
+      btAckChar = null;
+      btUpdateButtons();
+      btSetStatus("🔌 Bluetooth disconnected.", "warning");
+      document.getElementById("btDeviceList").innerHTML = "";
+      btLog("🔌 Disconnected", "#ffb74d");
+    });
 
-  btSending = true;
-  btUpdateButtons();
-  btSetStatus("🧪 Testing B0A1 WRITE...", "info");
+    // Bluetooth Modal functions
+    function openBluetoothSafety(emergencyMode = false) {
+      const modal = document.getElementById("bluetoothModal");
+      if (!modal) return;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
 
-  try {
-    const data = new TextEncoder().encode("PING");
-    await btWriteOne(data);
-    btSetStatus("✅ B0A1 WRITE test succeeded.", "success");
-    btLog("✅ PING write succeeded!", "#81c784");
-  } catch (error) {
-    btSetStatus(`❌ Test failed: ${error.message}`, "error");
-    btLog(`❌ PING failed: ${error.message}`, "#ef5350");
-  } finally {
-    btSending = false;
-    btUpdateButtons();
-  }
-});
-
-// Send message
-document.getElementById("btSendMessageBtn").addEventListener("click", async function() {
-  if (btSending || !btConnected) return;
-
-  const input = document.getElementById("btMessageInput");
-  const message = input.value.trim();
-  if (!message) {
-    btSetStatus("⚠️ Please type a message.", "warning");
-    return;
-  }
-
-  const encoded = new TextEncoder().encode(message);
-  if (encoded.length > BT_CHUNK_SIZE) {
-    btSetStatus(`❌ Message exceeds ${BT_CHUNK_SIZE} bytes.`, "error");
-    return;
-  }
-
-  btSending = true;
-  btUpdateButtons();
-  btSetStatus("📨 Sending message...", "info");
-
-  try {
-    await btWriteOne(encoded);
-    btSetStatus("✅ Message sent.", "success");
-    btLog(`📨 Message sent: ${message}`, "#ce93d8");
-  } catch (error) {
-    btSetStatus(`❌ Failed: ${error.message}`, "error");
-  } finally {
-    btSending = false;
-    btUpdateButtons();
-  }
-});
-
-// Clear message
-document.getElementById("btClearMessageBtn").addEventListener("click", function() {
-  document.getElementById("btMessageInput").value = "";
-  btUpdateMessageCounter();
-});
-
-// Message counter
-function btUpdateMessageCounter() {
-  const input = document.getElementById("btMessageInput");
-  const text = input.value;
-  const bytes = new TextEncoder().encode(text);
-  document.getElementById("btMessageCounter").textContent = `${text.length} / 20 characters`;
-  document.getElementById("btByteStatus").textContent = `Bytes: ${bytes.length} / 20`;
-}
-
-document.getElementById("btMessageInput").addEventListener("input", btUpdateMessageCounter);
-
-// Disconnect
-document.getElementById("btDisconnectBtn").addEventListener("click", function() {
-  try {
-    if (btDevice && btDevice.gatt && btDevice.gatt.connected) {
-      btDevice.gatt.disconnect();
-    }
-  } catch (e) {}
-
-  btConnected = false;
-  btServer = null;
-  btService = null;
-  btSosChar = null;
-  btAckChar = null;
-  btUpdateButtons();
-  btSetStatus("🔌 Bluetooth disconnected.", "warning");
-  document.getElementById("btDeviceList").innerHTML = "";
-  btLog("🔌 Disconnected", "#ffb74d");
-});
-
-// Bluetooth Modal functions
-function openBluetoothSafety(emergencyMode = false) {
-  const modal = document.getElementById("bluetoothModal");
-  if (!modal) return;
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-  
-  // Update location
-  btGetLocation().then(loc => {
-    const el = document.getElementById("btLocationText");
-    el.innerHTML = `
+      // Update location
+      btGetLocation().then(loc => {
+        const el = document.getElementById("btLocationText");
+        el.innerHTML = `
       <strong>📍 Current Location</strong><br>
       Latitude: ${loc.latitude.toFixed(6)}<br>
       Longitude: ${loc.longitude.toFixed(6)}
     `;
-    const link = document.getElementById("btMapLink");
-    link.href = `https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`;
-    link.style.display = "inline-block";
-  });
+        const link = document.getElementById("btMapLink");
+        link.href = `https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`;
+        link.style.display = "inline-block";
+      });
 
-  if (emergencyMode) {
-    btSetStatus("🚨 Emergency mode active. Connect your safety device.", "warning");
-    // Auto-click scan if not connected
-    if (!btConnected) {
-      setTimeout(() => document.getElementById("btScanBtn").click(), 500);
+      if (emergencyMode) {
+        btSetStatus("🚨 Emergency mode active. Connect your safety device.", "warning");
+        // Auto-click scan if not connected
+        if (!btConnected) {
+          setTimeout(() => document.getElementById("btScanBtn").click(), 500);
+        }
+      }
     }
-  }
-}
 
-function closeBluetoothSafety() {
-  const modal = document.getElementById("bluetoothModal");
-  if (!modal) return;
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
-  document.body.style.overflow = "";
-}
+    function closeBluetoothSafety() {
+      const modal = document.getElementById("bluetoothModal");
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
 
-// Keyboard shortcut
-document.addEventListener("keydown", function(event) {
-  if (event.key === "Escape") closeBluetoothSafety();
-});
+    // Keyboard shortcut
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closeBluetoothSafety();
+    });
 
-// Click outside modal to close
-document.getElementById("bluetoothModal")?.addEventListener("click", function(event) {
-  if (event.target.id === "bluetoothModal") closeBluetoothSafety();
-});
+    // Click outside modal to close
+    document.getElementById("bluetoothModal")?.addEventListener("click", function (event) {
+      if (event.target.id === "bluetoothModal") closeBluetoothSafety();
+    });
 
-// ============================================================
-// INIT
-// ============================================================
-window.addEventListener("load", function() {
-  initMap();
-  btUpdateMessageCounter();
-  btUpdateButtons();
-  
-  // Auto-request location
-  setTimeout(getCurrentLocation, 700);
-});
-</script>
+    // ============================================================
+    // INIT
+    // ============================================================
+    window.addEventListener("load", function () {
+      initMap();
+      btUpdateMessageCounter();
+      btUpdateButtons();
+
+      // Auto-request location
+      setTimeout(getCurrentLocation, 700);
+    });
+  </script>
 
 </body>
+
 </html>

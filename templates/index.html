@@ -41,10 +41,10 @@
     .nav-links a:hover{color:#155eef}
     .nav-chatbot{
       display:inline-flex;align-items:center;justify-content:center;
-      border:0;background:#7c3aed;color:white;padding:11px 17px;border-radius:10px;
-      font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap
+      background:#7c3aed;color:#fff;padding:11px 17px;border-radius:10px;
+      font-weight:700;white-space:nowrap
     }
-    .nav-chatbot:hover{background:#6d28d9}
+    .nav-chatbot:hover{background:#6d28d9;color:#fff}
     .nav-emergency{
       border:0;background:#dc3545;color:white;padding:11px 17px;border-radius:10px;
       font-weight:700;cursor:pointer
@@ -298,8 +298,9 @@
       <a href="#contact">Contact</a>
     </div>
 
-    <a class="nav-chatbot" href="https://ai-agent-z6im.onrender.com/" target="_blank" rel="noopener noreferrer">🤖 AI Chatbot</a>
-
+    <a class="nav-chatbot" href="https://ai-agent-z6im.onrender.com/" target="_blank" rel="noopener noreferrer">
+      🤖 AI Chatbot
+    </a>
     <button class="nav-emergency" onclick="window.location.href='https://sms-send-kae4.onrender.com/'">
       🚨 Emergency
     </button>
@@ -806,10 +807,55 @@ function hideSuggestions(id){
 // ============================================================
 // FIND ROUTES - FIXED
 // ============================================================
+async function resolveManualStartLocation(){
+  const input = document.getElementById("startInput");
+  const query = input.value.trim();
+
+  // If the input still matches the selected GPS/manual location, keep its coordinates.
+  if (currentLocation && query && query === currentLocation.label) {
+    return true;
+  }
+
+  if (!query) return false;
+
+  const status = document.getElementById("locationStatus");
+  status.textContent = "📍 Finding the starting location you entered...";
+
+  try {
+    const res = await fetch(`/api/geocode?text=${encodeURIComponent(query)}`);
+    const json = await res.json();
+    const results = json.results || [];
+
+    if (!res.ok || json.error || results.length === 0) {
+      status.textContent = "⚠️ Starting location not found. Choose a suggestion or enter a more specific place.";
+      return false;
+    }
+
+    // Use the first geocoding match for the typed start address.
+    const item = results[0];
+    const lat = Number(item.lat);
+    const lon = Number(item.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      status.textContent = "⚠️ The starting location returned invalid coordinates.";
+      return false;
+    }
+
+    setCurrentLocation(lat, lon, item.formatted || query);
+    return true;
+  } catch (err) {
+    console.error("Starting location lookup error:", err);
+    status.textContent = "⚠️ Could not look up the starting location. Check your connection and try again.";
+    return false;
+  }
+}
+
 async function findRoutes(){
-  if(!currentLocation){
-    alert("Please allow your current location or select a starting location first.");
-    getCurrentLocation();
+  // Prefer the manually entered/selected starting point. GPS is only used when
+  // the user taps “Use Current Location” or the field contains that GPS label.
+  const startReady = await resolveManualStartLocation();
+  if(!startReady){
+    alert("Enter a starting location and choose a suggestion, or tap Use Current Location.");
+    document.getElementById("startInput").focus();
     return;
   }
 
@@ -1076,6 +1122,15 @@ document.getElementById("destinationInput").addEventListener("input", function()
 });
 
 document.getElementById("startInput").addEventListener("input", function() {
+  // Invalidate the previous origin as soon as the user edits the field, so
+  // routes cannot silently continue using an old GPS/manual coordinate.
+  currentLocation = null;
+  if (startMarker) {
+    map.removeLayer(startMarker);
+    startMarker = null;
+  }
+  document.getElementById("locationStatus").textContent =
+    "Type a starting location, select a suggestion, or use your current location.";
   searchLocation("startInput", "startSuggestions");
 });
 
